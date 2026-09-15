@@ -34,7 +34,7 @@ RADAR_AXES = {"Pase (yds)": "passing_yards", "Carrera (yds)": "rushing_yards",
               "Recepcion (yds)": "receiving_yards", "TD totales": "total_tds",
               "1os downs": "first_downs_total"}
 
-st.set_page_config(page_title="Panel NFL", page_icon="🏈", layout="wide")
+st.set_page_config(page_title="EL PLAYBOOK NFL", page_icon="🏈", layout="wide")
 st.markdown(f"""
 <style>
   .stApp {{ background:{BG}; color:{FG}; }}
@@ -79,7 +79,7 @@ def totals_table(pdf, week_range=None):
 # ===========================================================================
 # Barra lateral
 # ===========================================================================
-st.sidebar.markdown("### 🏈 Panel NFL")
+st.sidebar.markdown("### 🏈 EL PLAYBOOK NFL")
 season = st.sidebar.selectbox("Temporada", list(range(2026, 1998, -1)), index=0)
 pdf = load_season(season)
 teams_df = load_teams()

@@ -11,6 +11,8 @@ Uso rapido:
     python3 dato_jornada.py --stat rushing_yards # top corredores
     python3 dato_jornada.py --season 2025 --week 10 --stat receiving_yards
     python3 dato_jornada.py --stat passing_tds --top 8
+    python3 dato_jornada.py --dir "C:/Users/Desktop/Miniprojects/Elplaybook"      # carpeta destino (se crea sola)
+
 
 Cambia CANAL abajo por el @ de tu amigo y ya tienes tu plantilla.
 """
@@ -24,7 +26,7 @@ from matplotlib import font_manager
 # ---------------------------------------------------------------------------
 # CONFIG DE MARCA  (cambia esto una vez y todo sale con vuestra identidad)
 # ---------------------------------------------------------------------------
-CANAL      = "@tu_canal_nfl"          # el @ de tu amigo
+CANAL      = "@ElplaybookNFL"          # el @ de tu amigo
 BG         = "#0B0E14"                 # fondo
 FG         = "#FFFFFF"                 # texto principal
 MUTED      = "#8A93A6"                 # texto secundario

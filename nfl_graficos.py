@@ -19,7 +19,7 @@ from matplotlib.patches import FancyBboxPatch, Circle, Ellipse
 # ---------------------------------------------------------------------------
 # MARCA (una sola vez, compartida por todo)
 # ---------------------------------------------------------------------------
-CANAL  = "@tu_canal_nfl"
+CANAL  = "@elplaybooknfl"          # el @ de tu amigo
 BG     = "#0B0E14"
 CARD   = "#161B26"
 FG     = "#FFFFFF"
