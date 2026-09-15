@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
-panel_nfl.py — EL PLAYBOOK NFL · panel interactivo (rediseno)
-  - Rankings tipo leaderboard con foto, medallas y barras de color de equipo
+panel_nfl.py — EL PLAYBOOK NFL · panel interactivo
+  - Rankings tipo leaderboard (foto, medallas, barras de equipo) + noticias
   - Comparador de jugadores (tabla + barras + radar)
-  - Tarjeta de jugador descargable (con buscador y foto)
-  - Columna de noticias
+  - Jugadores: buscador + estrellas destacadas + ficha con tarjeta descargable
+  - Contacto del canal en la barra lateral
 
 Lanzar:  streamlit run panel_nfl.py
 """
@@ -23,7 +23,19 @@ import nfl_graficos as G
 
 BG, CARD, FG, MUTED, ACCENT = G.BG, G.CARD, G.FG, G.MUTED, G.ACCENT
 
-# Fuente de noticias (RSS). Es en ingles; puedes cambiarla por una en espanol.
+# --- CONTACTO DEL CANAL (cambia por tus enlaces reales) --------------------
+REDES = {
+    "TikTok":    "https://www.tiktok.com/@elplaybooknfl",
+    "Instagram": "https://www.instagram.com/elplaybooknfl",
+    "YouTube":   "https://www.youtube.com/@elplaybooknfl",
+    "Contacto":  "mailto:elplaybooknfl@gmail.com",
+}
+
+# Estrellas para accesos rapidos (se filtran a las que existan en la temporada)
+FAMOSOS = ["Patrick Mahomes", "Josh Allen", "Lamar Jackson", "Jalen Hurts",
+           "Joe Burrow", "Ja'Marr Chase", "Justin Jefferson",
+           "Christian McCaffrey", "Saquon Barkley", "Travis Kelce"]
+
 NEWS_FEED = "https://www.espn.com/espn/rss/nfl/news"
 
 METRICS = {
@@ -39,70 +51,50 @@ RADAR_AXES = {"Pase (yds)": "passing_yards", "Carrera (yds)": "rushing_yards",
 
 st.set_page_config(page_title="El Playbook NFL", page_icon="🏈", layout="wide")
 
-# ---------------------------------------------------------------------------
-# ESTILO (CSS a medida)
-# ---------------------------------------------------------------------------
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap');
-
 html, body, [class*="css"] { font-family:'Inter', sans-serif; }
 .stApp { background: radial-gradient(1100px 500px at 15% -10%, #14243f 0%, #0B0E14 55%); color:#E9EDF5; }
 #MainMenu, footer, header { visibility:hidden; }
 .block-container { padding-top:1.1rem; max-width:1320px; }
 h1,h2,h3 { font-family:'Oswald', sans-serif; letter-spacing:.5px; color:#fff; }
-
-/* Cabecera / marca */
-.hero { display:flex; align-items:center; justify-content:space-between;
-        padding-bottom:.6rem; margin-bottom:.3rem; border-bottom:1px solid rgba(255,255,255,.07); }
-.brand { font-family:'Oswald'; font-weight:700; font-size:2rem; letter-spacing:1px;
-         color:#fff; display:flex; align-items:center; gap:.55rem; }
-.brand .nfl { background:linear-gradient(135deg,#00E5A0,#12B8FF); color:#0B0E14;
-              padding:.02rem .5rem; border-radius:9px; }
+.hero { display:flex; align-items:center; justify-content:space-between; padding-bottom:.6rem; margin-bottom:.3rem; border-bottom:1px solid rgba(255,255,255,.07); }
+.brand { font-family:'Oswald'; font-weight:700; font-size:2rem; letter-spacing:1px; color:#fff; display:flex; align-items:center; gap:.55rem; }
+.brand .nfl { background:linear-gradient(135deg,#00E5A0,#12B8FF); color:#0B0E14; padding:.02rem .5rem; border-radius:9px; }
 .brand .ball { font-size:1.7rem; }
-.tagline { color:#8A93A6; font-size:.9rem; font-weight:500; text-align:right; }
-
-/* Tabs */
+.tagline { color:#8A93A6; font-size:.9rem; text-align:right; }
 .stTabs [data-baseweb="tab-list"] { gap:.2rem; border-bottom:1px solid rgba(255,255,255,.08); }
 .stTabs [data-baseweb="tab"] { font-family:'Oswald'; font-size:1.05rem; letter-spacing:.5px; }
 .stTabs [aria-selected="true"] { color:#00E5A0 !important; }
-
 section[data-testid="stSidebar"] { background:#0E1420; border-right:1px solid rgba(255,255,255,.06); }
-
-/* Leaderboard */
-.lb-row { display:flex; align-items:center; gap:14px; background:#131A26;
-          border:1px solid rgba(255,255,255,.05); border-radius:14px;
-          padding:10px 16px; margin-bottom:10px; transition:transform .15s, border-color .15s; }
+.lb-row { display:flex; align-items:center; gap:14px; background:#131A26; border:1px solid rgba(255,255,255,.05); border-radius:14px; padding:10px 16px; margin-bottom:10px; transition:transform .15s, border-color .15s; }
 .lb-row:hover { transform:translateX(4px); border-color:rgba(0,229,160,.45); }
-.lb-rank { font-family:'Oswald'; font-weight:700; font-size:1.45rem; width:36px;
-           text-align:center; color:#8A93A6; }
+.lb-rank { font-family:'Oswald'; font-weight:700; font-size:1.45rem; width:36px; text-align:center; color:#8A93A6; }
 .rank-1 { color:#FFD54A; } .rank-2 { color:#C9D2DE; } .rank-3 { color:#E0925B; }
-.lb-photo { width:52px; height:52px; border-radius:50%; object-fit:cover;
-            background:#222C3D; border:2px solid rgba(255,255,255,.15); }
+.lb-photo { width:52px; height:52px; border-radius:50%; object-fit:cover; background:#222C3D; border:2px solid rgba(255,255,255,.15); }
 .lb-info { flex:1; min-width:0; }
 .lb-name { font-family:'Oswald'; font-weight:600; font-size:1.15rem; color:#fff; line-height:1.15; }
 .lb-meta { color:#8A93A6; font-size:.78rem; margin-bottom:6px; }
 .lb-track { height:8px; background:rgba(255,255,255,.06); border-radius:6px; overflow:hidden; }
 .lb-fill { height:100%; border-radius:6px; }
-.lb-value { font-family:'Oswald'; font-weight:700; font-size:1.5rem; color:#fff;
-            text-align:right; white-space:nowrap; }
+.lb-value { font-family:'Oswald'; font-weight:700; font-size:1.5rem; color:#fff; text-align:right; white-space:nowrap; }
 .lb-value span { font-size:.72rem; color:#8A93A6; font-weight:500; margin-left:3px; }
-
-/* Noticias */
-.news-h { font-family:'Oswald'; font-size:1.25rem; color:#fff; margin:.2rem 0 .7rem;
-          border-left:3px solid #00E5A0; padding-left:.5rem; }
-.news-card { display:block; background:#131A26; border:1px solid rgba(255,255,255,.05);
-             border-radius:12px; padding:12px 14px; margin-bottom:10px; text-decoration:none; }
+.news-h { font-family:'Oswald'; font-size:1.25rem; color:#fff; margin:.2rem 0 .7rem; border-left:3px solid #00E5A0; padding-left:.5rem; }
+.news-card { display:block; background:#131A26; border:1px solid rgba(255,255,255,.05); border-radius:12px; padding:12px 14px; margin-bottom:10px; text-decoration:none; }
 .news-card:hover { border-color:rgba(0,229,160,.45); }
 .news-title { color:#E9EDF5; font-size:.9rem; font-weight:600; line-height:1.3; }
 .news-src { color:#00E5A0; font-size:.7rem; text-transform:uppercase; letter-spacing:.5px; margin-top:5px; }
+.contact a { color:#C9D2DE !important; text-decoration:none; display:block; padding:4px 0; font-size:.92rem; }
+.contact a:hover { color:#00E5A0 !important; }
+.prof-hd { display:flex; align-items:center; gap:16px; margin:.4rem 0 1rem; }
+.prof-hd img { width:84px; height:84px; border-radius:50%; object-fit:cover; background:#222C3D; border:3px solid rgba(255,255,255,.15); }
+.prof-name { font-family:'Oswald'; font-size:2rem; color:#fff; line-height:1; }
+.prof-meta { color:#00E5A0; font-weight:600; font-size:.95rem; }
 </style>
 """, unsafe_allow_html=True)
 
 
-# ---------------------------------------------------------------------------
-# Datos
-# ---------------------------------------------------------------------------
 @st.cache_data(show_spinner="Cargando datos de la NFL...")
 def load_season(season):
     df = nfl.load_player_stats([season]).filter(pl.col("season_type") == "REG")
@@ -138,6 +130,24 @@ def _mode(s):
     return m.iloc[0] if len(m) else ""
 
 
+def headshot_of(pdf, name):
+    s = pdf[pdf.player_display_name == name]["headshot_url"].dropna()
+    return s.iloc[0] if s.size else ""
+
+
+def player_season(pdf, name):
+    p = pdf[pdf.player_display_name == name]
+    g = lambda c: int(p[c].sum())
+    return {
+        "pos": _mode(p["position"]), "team": _mode(p["team"]),
+        "headshot": headshot_of(pdf, name),
+        "Yds pase": g("passing_yards"), "TD pase": g("passing_tds"),
+        "Yds tierra": g("rushing_yards"), "TD tierra": g("rushing_tds"),
+        "Yds recep.": g("receiving_yards"),
+        "TD tot.": g("passing_tds") + g("rushing_tds") + g("receiving_tds"),
+    }
+
+
 def totals_table(pdf, week_range=None):
     d = pdf
     if week_range is not None:
@@ -164,12 +174,9 @@ def leaderboard_data(pdf, colors, stat_col, week, n):
         headshot=("headshot_url", lambda s: s.dropna().iloc[0] if s.dropna().size else ""),
     ).reset_index()
     g = g[g["value"] > 0].sort_values("value", ascending=False).head(n)
-    rows = []
-    for _, r in g.iterrows():
-        rows.append(dict(name=r.player_display_name, team=r.team, pos=r.pos,
-                         value=r.value, headshot=r.headshot,
-                         color=colors.get(r.team, ACCENT)))
-    return rows
+    return [dict(name=r.player_display_name, team=r.team, pos=r.pos, value=r.value,
+                 headshot=r.headshot, color=colors.get(r.team, ACCENT))
+            for _, r in g.iterrows()]
 
 
 def leaderboard_html(rows, stat_key):
@@ -196,16 +203,14 @@ def news_html(items):
     if not items:
         return ('<div class="news-card"><div class="news-title">Noticias no '
                 'disponibles ahora mismo.</div></div>')
-    out = []
-    for title, link in items:
-        out.append(f'<a class="news-card" href="{link}" target="_blank">'
-                   f'<div class="news-title">{title}</div>'
-                   f'<div class="news-src">Leer mas →</div></a>')
-    return "".join(out)
+    return "".join(
+        f'<a class="news-card" href="{l}" target="_blank">'
+        f'<div class="news-title">{t}</div><div class="news-src">Leer mas →</div></a>'
+        for t, l in items)
 
 
 # ---------------------------------------------------------------------------
-# Cabecera + barra lateral
+# Barra lateral + cabecera
 # ---------------------------------------------------------------------------
 st.sidebar.markdown("### 🏈 EL PLAYBOOK NFL")
 season = st.sidebar.selectbox("Temporada", list(range(2026, 1998, -1)), index=0)
@@ -214,8 +219,14 @@ teams_df = load_teams()
 teams = G.team_info(teams_df)
 colors = {a: to_hex(c) for a, (c, _) in teams.items()}
 weeks = sorted(pdf["week"].unique().tolist())
-st.sidebar.markdown(f"<br><span style='color:{ACCENT};font-weight:700'>"
-                    f"{G.CANAL}</span>", unsafe_allow_html=True)
+all_names = sorted(pdf.player_display_name.dropna().unique().tolist())
+
+st.sidebar.markdown("---")
+st.sidebar.markdown("**📣 Sigue al canal**")
+links = "".join(f'<a href="{u}" target="_blank">{n}</a>' for n, u in REDES.items())
+st.sidebar.markdown(f"<div class='contact'>{links}</div>", unsafe_allow_html=True)
+st.sidebar.markdown(f"<br><span style='color:{ACCENT};font-weight:700'>{G.CANAL}</span>",
+                    unsafe_allow_html=True)
 st.sidebar.caption("Datos: nflverse")
 
 st.markdown(f"""
@@ -225,10 +236,10 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-tab1, tab2, tab3 = st.tabs(["🏆 Rankings", "📊 Comparar", "🪪 Tarjeta"])
+tab1, tab2, tab3 = st.tabs(["🏆 Rankings", "📊 Comparar", "👤 Jugadores"])
 
 # ---------------------------------------------------------------------------
-# TAB 1 — Rankings (leaderboard) + Noticias
+# TAB 1 — Rankings + Noticias
 # ---------------------------------------------------------------------------
 with tab1:
     main, side = st.columns([2.4, 1], gap="large")
@@ -240,13 +251,11 @@ with tab1:
                               + [f"Jornada {w}" for w in weeks])
         top_n = c3.slider("Top", 5, 15, 10)
         week = None if ambito == "Temporada completa" else int(ambito.split()[1])
-
         rows = leaderboard_data(pdf, colors, G.STATS[stat_key][0], week, top_n)
         sub = "Temporada completa" if week is None else f"Jornada {week}"
         st.markdown(f"<h2 style='margin:.3rem 0 1rem'>{stat_label} · {sub}</h2>",
                     unsafe_allow_html=True)
         st.markdown(leaderboard_html(rows, stat_key), unsafe_allow_html=True)
-
         with st.expander("⬇️ Descargar como imagen vertical (para subir)"):
             if st.button("Generar PNG del ranking", type="primary"):
                 with st.spinner("Generando..."):
@@ -255,10 +264,8 @@ with tab1:
                 st.image(png, width=320)
                 fn = f"ranking_{stat_key}_{season}" + (f"_j{week}" if week else "") + ".png"
                 st.download_button("Descargar PNG", png, file_name=fn, mime="image/png")
-
     with side:
-        st.markdown('<div class="news-h">📰 Últimas noticias</div>',
-                    unsafe_allow_html=True)
+        st.markdown('<div class="news-h">📰 Últimas noticias</div>', unsafe_allow_html=True)
         st.markdown(news_html(get_news(NEWS_FEED)), unsafe_allow_html=True)
 
 # ---------------------------------------------------------------------------
@@ -274,13 +281,12 @@ with tab2:
     totals = totals_table(pdf, wr)
     active = totals[(totals.passing_yards + totals.rushing_yards
                      + totals.receiving_yards) > 0]
-    names = sorted(active.player_display_name.tolist())
+    cnames = sorted(active.player_display_name.tolist())
     default = [n for n in ["Josh Allen", "Lamar Jackson", "Jalen Hurts"]
-               if n in names][:2]
-    picked = st.multiselect("🔍 Busca y elige jugadores a comparar", names, default=default)
+               if n in cnames][:2]
+    picked = st.multiselect("🔍 Busca y elige jugadores a comparar", cnames, default=default)
     metric_label = st.selectbox("Metrica del grafico de barras",
                                 list(METRICS.keys()), index=0)
-
     if not picked:
         st.info("Elige al menos un jugador para empezar.")
     else:
@@ -303,8 +309,7 @@ with tab2:
                 text=b[mcol], textposition="outside"))
             fig.update_layout(template="plotly_dark", paper_bgcolor="rgba(0,0,0,0)",
                 plot_bgcolor="rgba(0,0,0,0)", height=90 + 70 * len(b),
-                margin=dict(l=10, r=30, t=10, b=10), font=dict(color=FG),
-                showlegend=False)
+                margin=dict(l=10, r=30, t=10, b=10), font=dict(color=FG), showlegend=False)
             st.plotly_chart(fig, use_container_width=True)
         with c2:
             st.markdown("<h3>Perfil comparado (radar)</h3>", unsafe_allow_html=True)
@@ -315,30 +320,65 @@ with tab2:
                 vv = [row[c] / mx[c] for c in acols]
                 radar.add_trace(go.Scatterpolar(
                     r=vv + [vv[0]], theta=lbls + [lbls[0]], fill="toself",
-                    name=row.player_display_name,
-                    line_color=colors.get(row.team, ACCENT)))
+                    name=row.player_display_name, line_color=colors.get(row.team, ACCENT)))
             radar.update_layout(template="plotly_dark", paper_bgcolor="rgba(0,0,0,0)",
                 polar=dict(bgcolor=CARD, radialaxis=dict(visible=True, range=[0, 1],
                     showticklabels=False)), height=430,
                 margin=dict(l=30, r=30, t=30, b=30), font=dict(color=FG),
                 legend=dict(orientation="h", y=-0.1))
             st.plotly_chart(radar, use_container_width=True)
-        st.caption("El radar normaliza cada eje respecto al mejor de los elegidos: "
-                   "muestra perfiles, no valores absolutos.")
+        st.caption("El radar normaliza cada eje respecto al mejor de los elegidos.")
 
 # ---------------------------------------------------------------------------
-# TAB 3 — Tarjeta
+# TAB 3 — Jugadores (buscador + estrellas + ficha con tarjeta)
 # ---------------------------------------------------------------------------
 with tab3:
-    st.markdown("<h2>Tarjeta de jugador</h2>", unsafe_allow_html=True)
-    all_names = sorted(pdf.player_display_name.dropna().unique().tolist())
-    idx = all_names.index("Josh Allen") if "Josh Allen" in all_names else 0
-    player = st.selectbox("🔍 Busca cualquier jugador", all_names, index=idx)
-    modo = st.radio("Imagen", ["Cara (circulo)", "Cuerpo (imagen grande)"],
-                    horizontal=True)
+    if ("sel_player" not in st.session_state
+            or st.session_state.sel_player not in all_names):
+        st.session_state.sel_player = ("Josh Allen" if "Josh Allen" in all_names
+                                       else all_names[0])
+
+    def _pick(name):
+        st.session_state.sel_player = name
+
+    st.markdown("<h2>Jugadores</h2>", unsafe_allow_html=True)
+    st.selectbox("🔍 Busca cualquier jugador", all_names, key="sel_player")
+
+    famosos = [n for n in FAMOSOS if n in all_names][:6]
+    if famosos:
+        st.markdown("<div class='news-h'>⭐ Destacados</div>", unsafe_allow_html=True)
+        cols = st.columns(len(famosos))
+        for col, name in zip(cols, famosos):
+            with col:
+                hs = headshot_of(pdf, name)
+                if hs:
+                    st.markdown(f"<div style='text-align:center'><img src='{hs}' "
+                                f"style='width:70px;height:70px;border-radius:50%;"
+                                f"object-fit:cover;border:2px solid rgba(255,255,255,.15)'></div>",
+                                unsafe_allow_html=True)
+                st.button(name, key=f"fam_{name}", on_click=_pick, args=(name,),
+                          use_container_width=True)
+
+    st.markdown("---")
+    player = st.session_state.sel_player
+    info = player_season(pdf, player)
+    st.markdown(f"""
+      <div class="prof-hd">
+        <img src="{info['headshot']}"/>
+        <div><div class="prof-name">{player.upper()}</div>
+        <div class="prof-meta">{info['pos']} · {info['team']} · Temporada {season}</div></div>
+      </div>""", unsafe_allow_html=True)
+
+    m = st.columns(6)
+    for col, key in zip(m, ["Yds pase", "TD pase", "Yds tierra", "TD tierra",
+                            "Yds recep.", "TD tot."]):
+        col.metric(key, f"{info[key]:,}".replace(",", "."))
+
+    st.markdown("#### 🪪 Genera su tarjeta")
+    cc1, cc2 = st.columns([1, 1])
+    modo = cc1.radio("Imagen", ["Cara (circulo)", "Cuerpo (imagen grande)"])
     modo_key = "circulo" if modo.startswith("Cara") else "cuerpo"
-    up = st.file_uploader("Tu propia foto (opcional; PNG transparente para 'cuerpo')",
-                          type=["png", "jpg", "jpeg"])
+    up = cc2.file_uploader("Tu propia foto (opcional)", type=["png", "jpg", "jpeg"])
     if st.button("Generar tarjeta", type="primary"):
         foto = None
         if up is not None:
