@@ -1,8 +1,9 @@
-streamlit
-plotly
-nflreadpy
-matplotlib
-pandas
-polars
-pillow
-numpy
+streamlit>=1.37
+plotly>=5.20
+nflreadpy>=0.1
+matplotlib>=3.8
+pandas>=2.2
+polars>=1.0
+pillow>=10.0
+numpy>=1.26
+tzdata>=2024.1
