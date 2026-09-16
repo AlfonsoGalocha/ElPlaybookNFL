@@ -1,10 +1,13 @@
 #!/usr/bin/env python3
 """
 panel_nfl.py — EL PLAYBOOK NFL · panel interactivo
-  - Rankings tipo leaderboard (foto, medallas, barras de equipo) + noticias
+  - Cabecera tipo revista deportiva: navbar + carrusel de noticias
+  - Equipos: selector + stats del equipo + plantilla
+  - Clasificacion: general y por conferencia/division
+  - Rankings tipo leaderboard (foto, medallas, barras de equipo)
   - Comparador de jugadores (tabla + barras + radar)
   - Jugadores: buscador + estrellas destacadas + ficha con tarjeta descargable
-  - Contacto del canal en la barra lateral
+  - Pie de pagina con el contacto del canal
 
 Lanzar:  streamlit run panel_nfl.py
 """
@@ -51,6 +54,30 @@ RADAR_AXES = {"Pase (yds)": "passing_yards", "Carrera (yds)": "rushing_yards",
               "Recepcion (yds)": "receiving_yards", "TD totales": "total_tds",
               "1os downs": "first_downs_total"}
 
+PAGES = [
+    ("equipos", "🏟️ Equipos"),
+    ("clasificacion", "📋 Clasificación"),
+    ("rankings", "🏆 Rankings"),
+    ("comparar", "📊 Comparar"),
+    ("jugadores", "👤 Jugadores"),
+]
+
+HERO_GRADIENTS = [
+    f"linear-gradient(135deg,{ACCENT}dd,#1a0a12 70%)",
+    f"linear-gradient(135deg,{ACCENT2}dd,#08131f 70%)",
+    "linear-gradient(135deg,#7a1130dd,#0B0E14 70%)",
+    "linear-gradient(135deg,#0e5f9add,#0B0E14 70%)",
+    "linear-gradient(135deg,#3a0d1add,#0B0E14 70%)",
+]
+
+FALLBACK_NEWS = [
+    ("Bienvenido a El Playbook NFL", "#"),
+    ("Rankings, clasificación y equipos en un solo lugar", "#"),
+    ("Sigue a tus jugadores favoritos jornada a jornada", "#"),
+    ("Compara stats y genera tu propia tarjeta descargable", "#"),
+    ("Datos oficiales de nflverse, actualizados cada semana", "#"),
+]
+
 LOGO_PATH = "logo.png"
 LOGO_B64 = base64.b64encode(open(LOGO_PATH, "rb").read()).decode()
 
@@ -58,27 +85,63 @@ st.set_page_config(page_title="El Playbook NFL", page_icon=LOGO_PATH, layout="wi
 
 st.markdown(f"""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap');
 html, body, [class*="css"] {{ font-family:'Inter', sans-serif; }}
 .stApp {{ background: radial-gradient(1200px 560px at 12% -12%, #2a1420 0%, #0B0E14 45%),
                        radial-gradient(1000px 480px at 100% 0%, #0e2438 0%, #0B0E14 55%); color:#E9EDF5; }}
 #MainMenu, footer, header {{ visibility:hidden; }}
-.block-container {{ padding-top:1.1rem; max-width:1360px; }}
+.block-container {{ padding-top:1rem; padding-bottom:0; max-width:1360px; }}
 h1,h2,h3 {{ font-family:'Oswald', sans-serif; letter-spacing:.5px; color:#fff; }}
-.hero {{ display:flex; align-items:center; justify-content:space-between; padding-bottom:.7rem; margin-bottom:.4rem; border-bottom:1px solid rgba(255,255,255,.08); }}
-.brand {{ font-family:'Oswald'; font-weight:700; font-size:2rem; letter-spacing:1px; color:#fff; display:flex; align-items:center; gap:.6rem; }}
-.brand .nfl {{ background:linear-gradient(135deg,{ACCENT},{ACCENT2}); color:#fff; padding:.02rem .5rem; border-radius:9px; }}
-.brand .logo {{ height:46px; width:46px; border-radius:50%; object-fit:cover; box-shadow:0 0 0 2px rgba(255,255,255,.18); }}
-.tagline {{ color:#8A93A6; font-size:.9rem; text-align:right; }}
-.side-brand {{ display:flex; align-items:center; gap:10px; margin-bottom:.2rem; }}
-.side-brand img {{ width:40px; height:40px; border-radius:50%; object-fit:cover; box-shadow:0 0 0 2px rgba(255,255,255,.18); }}
-.side-brand span {{ font-family:'Oswald'; font-weight:700; font-size:1.05rem; letter-spacing:.5px; color:#fff; }}
-.stTabs [data-baseweb="tab-list"] {{ gap:.2rem; border-bottom:1px solid rgba(255,255,255,.08); }}
-.stTabs [data-baseweb="tab"] {{ font-family:'Oswald'; font-size:1.05rem; letter-spacing:.5px; }}
-.stTabs [aria-selected="true"] {{ color:{ACCENT} !important; }}
-.stTabs [data-baseweb="tab-highlight"] {{ background-color:{ACCENT} !important; }}
-section[data-testid="stSidebar"] {{ background:#0E1420; border-right:1px solid rgba(255,255,255,.06); }}
-.lb-row {{ display:flex; align-items:center; gap:14px; background:#131A26; border:1px solid rgba(255,255,255,.05); border-radius:14px; padding:10px 16px; margin-bottom:10px; transition:transform .15s, border-color .15s; }}
+
+@keyframes fadeUp {{ from {{ opacity:0; transform:translateY(14px); }} to {{ opacity:1; transform:translateY(0); }} }}
+.fade-up {{ animation:fadeUp .5s ease both; }}
+.d0{{animation-delay:.02s}} .d1{{animation-delay:.06s}} .d2{{animation-delay:.10s}} .d3{{animation-delay:.14s}}
+.d4{{animation-delay:.18s}} .d5{{animation-delay:.22s}} .d6{{animation-delay:.26s}} .d7{{animation-delay:.30s}}
+.d8{{animation-delay:.34s}} .d9{{animation-delay:.38s}}
+
+/* --- Navbar --- */
+.navbar {{ display:flex; align-items:center; gap:14px; padding:.3rem 0 .6rem; }}
+.nav-brand {{ font-family:'Oswald'; font-weight:700; font-size:1.22rem; letter-spacing:.5px; color:#fff; display:flex; align-items:center; gap:.4rem; white-space:nowrap; overflow:hidden; }}
+.nav-brand img {{ height:32px; width:32px; min-width:32px; border-radius:50%; object-fit:cover; box-shadow:0 0 0 2px rgba(255,255,255,.18); }}
+.nav-brand .nfl {{ background:linear-gradient(135deg,{ACCENT},{ACCENT2}); color:#fff; padding:.02rem .4rem; border-radius:6px; font-size:.95rem; }}
+div[data-testid="stHorizontalBlock"] div[data-testid="stButton"] button {{
+    border-radius:999px !important; font-family:'Oswald'; font-size:.8rem; letter-spacing:.2px;
+    padding:.4rem .5rem !important; white-space:nowrap; border:1px solid rgba(255,255,255,.10) !important;
+    background:rgba(255,255,255,.03) !important; color:#C9D2DE !important; transition:all .18s ease;
+}}
+div[data-testid="stButton"] button:hover {{ border-color:{ACCENT} !important; color:#fff !important; transform:translateY(-1px); }}
+div[data-testid="stButton"] button[kind="primary"] {{
+    background:linear-gradient(135deg,{ACCENT},#a4142c) !important; border-color:transparent !important;
+    color:#fff !important; box-shadow:0 4px 16px rgba(228,32,60,.35);
+}}
+
+/* --- Hero carousel --- */
+.hero-carousel {{ position:relative; height:230px; border-radius:20px; overflow:hidden; margin:.2rem 0 1.4rem;
+    border:1px solid rgba(255,255,255,.08); }}
+.hc-slide {{ position:absolute; inset:0; display:flex; flex-direction:column; justify-content:flex-end;
+    padding:22px 28px; text-decoration:none; opacity:0; animation:hcFade 25s infinite ease-in-out; }}
+@keyframes hcFade {{ 0%{{opacity:1}} 16%{{opacity:1}} 20%{{opacity:0}} 96%{{opacity:0}} 100%{{opacity:0}} }}
+.hc-tag {{ font-family:'Oswald'; font-size:.72rem; font-weight:700; letter-spacing:2px; color:#fff;
+    background:rgba(0,0,0,.35); display:inline-block; padding:3px 10px; border-radius:20px; margin-bottom:10px;
+    width:fit-content; }}
+.hc-title {{ font-family:'Bebas Neue'; font-size:2.1rem; line-height:1.05; color:#fff; max-width:78%;
+    text-shadow:0 2px 12px rgba(0,0,0,.5); }}
+.hc-cta {{ color:#fff; opacity:.85; font-size:.82rem; font-weight:600; margin-top:8px; }}
+.hc-dots {{ position:absolute; bottom:14px; right:20px; display:flex; gap:6px; }}
+.hc-dot {{ width:22px; height:4px; border-radius:3px; background:rgba(255,255,255,.25); animation:hcDot 25s infinite; }}
+@keyframes hcDot {{ 0%{{background:#fff}} 16%{{background:#fff}} 20%{{background:rgba(255,255,255,.25)}} 100%{{background:rgba(255,255,255,.25)}} }}
+
+/* --- Titulos de seccion --- */
+.sect-title {{ font-family:'Bebas Neue'; font-size:2.1rem; letter-spacing:1px; color:#fff; margin:.1rem 0 .2rem;
+    position:relative; display:inline-block; }}
+.sect-title::after {{ content:""; display:block; height:4px; width:64px; margin-top:4px; border-radius:3px;
+    background:linear-gradient(90deg,{ACCENT},{ACCENT2}); }}
+.sect-sub {{ color:#8A93A6; font-size:.92rem; margin:.3rem 0 1.1rem; }}
+
+/* --- Cards genericas --- */
+.lb-row, .std-row, .news-card {{ background:#131A26; border:1px solid rgba(255,255,255,.05); border-radius:14px;
+    transition:transform .15s, border-color .15s; }}
+.lb-row {{ display:flex; align-items:center; gap:14px; padding:10px 16px; margin-bottom:10px; }}
 .lb-row:hover {{ transform:translateX(4px); border-color:rgba(228,32,60,.5); }}
 .lb-rank {{ font-family:'Oswald'; font-weight:700; font-size:1.45rem; width:36px; text-align:center; color:#8A93A6; }}
 .rank-1 {{ color:#FFD54A; }} .rank-2 {{ color:#C9D2DE; }} .rank-3 {{ color:#E0925B; }}
@@ -90,13 +153,6 @@ section[data-testid="stSidebar"] {{ background:#0E1420; border-right:1px solid r
 .lb-fill {{ height:100%; border-radius:6px; }}
 .lb-value {{ font-family:'Oswald'; font-weight:700; font-size:1.5rem; color:#fff; text-align:right; white-space:nowrap; }}
 .lb-value span {{ font-size:.72rem; color:#8A93A6; font-weight:500; margin-left:3px; }}
-.news-h {{ font-family:'Oswald'; font-size:1.25rem; color:#fff; margin:.2rem 0 .7rem; border-left:3px solid {ACCENT}; padding-left:.5rem; }}
-.news-card {{ display:block; background:#131A26; border:1px solid rgba(255,255,255,.05); border-radius:12px; padding:12px 14px; margin-bottom:10px; text-decoration:none; }}
-.news-card:hover {{ border-color:rgba(228,32,60,.5); }}
-.news-title {{ color:#E9EDF5; font-size:.9rem; font-weight:600; line-height:1.3; }}
-.news-src {{ color:{ACCENT}; font-size:.7rem; text-transform:uppercase; letter-spacing:.5px; margin-top:5px; }}
-.contact a {{ color:#C9D2DE !important; text-decoration:none; display:block; padding:4px 0; font-size:.92rem; }}
-.contact a:hover {{ color:{ACCENT2} !important; }}
 .prof-hd {{ display:flex; align-items:center; gap:16px; margin:.4rem 0 1rem; }}
 .prof-hd img {{ width:84px; height:84px; border-radius:50%; object-fit:cover; background:#222C3D; border:3px solid rgba(255,255,255,.15); }}
 .prof-name {{ font-family:'Oswald'; font-size:2rem; color:#fff; line-height:1; }}
@@ -104,25 +160,42 @@ section[data-testid="stSidebar"] {{ background:#0E1420; border-right:1px solid r
 
 /* --- Equipos --- */
 .conf-h {{ font-family:'Oswald'; font-weight:700; font-size:1.05rem; letter-spacing:1px; color:{ACCENT2}; margin:1rem 0 .5rem; }}
-div[data-testid="stButton"] button {{ background:#131A26; border:1px solid rgba(255,255,255,.08); border-radius:12px; transition:border-color .15s, transform .15s; }}
-div[data-testid="stButton"] button:hover {{ border-color:{ACCENT}; transform:translateY(-2px); color:#fff; }}
-.team-hd {{ display:flex; align-items:center; gap:18px; margin:.4rem 0 1.1rem; padding:16px 20px; border-radius:16px; }}
+.team-pick img {{ width:40px; height:40px; object-fit:contain; display:block; margin:0 auto 4px; }}
+.team-hd {{ display:flex; align-items:center; gap:18px; margin:1rem 0 1.1rem; padding:18px 22px; border-radius:16px;
+    border:1px solid rgba(255,255,255,.08); }}
 .team-hd img {{ width:76px; height:76px; object-fit:contain; }}
-.team-hd .tname {{ font-family:'Oswald'; font-size:2.1rem; color:#fff; line-height:1; }}
+.team-hd .tname {{ font-family:'Bebas Neue'; font-size:2.3rem; color:#fff; line-height:1; letter-spacing:1px; }}
 .team-hd .tmeta {{ color:rgba(255,255,255,.85); font-weight:600; font-size:.95rem; margin-top:3px; }}
 
 /* --- Clasificacion --- */
-.div-h {{ font-family:'Oswald'; font-weight:700; font-size:.95rem; letter-spacing:1px; color:#8A93A6; text-transform:uppercase; margin:1.1rem 0 .5rem; padding-left:.2rem; border-left:3px solid {ACCENT2}; padding-left:.5rem; }}
-.std-row {{ display:flex; align-items:center; gap:12px; background:#131A26; border:1px solid rgba(255,255,255,.05); border-radius:10px; padding:8px 14px; margin-bottom:6px; }}
+.div-h {{ font-family:'Oswald'; font-weight:700; font-size:.9rem; letter-spacing:1px; color:#8A93A6; text-transform:uppercase;
+    margin:0 0 .5rem; padding-left:.5rem; border-left:3px solid {ACCENT2}; }}
+.std-row {{ display:flex; align-items:center; gap:12px; padding:8px 14px; margin-bottom:6px; }}
 .std-row:hover {{ border-color:rgba(31,163,232,.5); }}
 .std-rank {{ width:22px; color:#8A93A6; font-weight:700; font-family:'Oswald'; }}
-.std-logo {{ width:30px; height:30px; object-fit:contain; }}
-.std-team {{ flex:1; min-width:0; font-weight:600; color:#fff; }}
+.std-logo {{ width:28px; height:28px; object-fit:contain; }}
+.std-team {{ flex:1; min-width:0; font-weight:600; color:#fff; font-size:.92rem; }}
 .std-team small {{ color:#8A93A6; font-weight:500; }}
-.std-stat {{ width:56px; text-align:center; font-family:'Oswald'; font-weight:600; color:#E9EDF5; }}
-.std-head {{ display:flex; align-items:center; gap:12px; padding:0 14px; margin-bottom:4px; color:#8A93A6; font-size:.72rem; letter-spacing:.5px; text-transform:uppercase; }}
-.std-head .std-rank {{ width:22px; }} .std-head .std-logo {{ width:30px; }} .std-head .std-team {{ flex:1; }}
-.std-head .std-stat {{ width:56px; text-align:center; }}
+.std-stat {{ width:50px; text-align:center; font-family:'Oswald'; font-weight:600; color:#E9EDF5; font-size:.92rem; }}
+.std-head {{ display:flex; align-items:center; gap:12px; padding:0 14px; margin-bottom:4px; color:#8A93A6; font-size:.68rem; letter-spacing:.5px; text-transform:uppercase; }}
+.std-head .std-rank {{ width:22px; }} .std-head .std-logo {{ width:28px; }} .std-head .std-team {{ flex:1; }}
+.std-head .std-stat {{ width:50px; text-align:center; }}
+.div-grid {{ display:grid; grid-template-columns:1fr 1fr; gap:0 26px; }}
+@media (max-width:900px) {{ .div-grid {{ grid-template-columns:1fr; }} }}
+.div-block {{ margin-bottom:1.2rem; }}
+
+/* --- Footer --- */
+.site-footer {{ margin-top:3rem; padding:2rem 0 1.4rem; border-top:1px solid rgba(255,255,255,.08); text-align:center; }}
+.footer-brand {{ display:flex; align-items:center; justify-content:center; gap:10px; margin-bottom:.9rem; }}
+.footer-brand img {{ width:34px; height:34px; border-radius:50%; object-fit:cover; }}
+.footer-brand span {{ font-family:'Oswald'; font-weight:700; font-size:1.05rem; color:#fff; letter-spacing:.5px; }}
+.footer-links {{ display:flex; justify-content:center; gap:22px; flex-wrap:wrap; margin-bottom:1rem; }}
+.footer-links a {{ color:#C9D2DE; text-decoration:none; font-size:.88rem; font-weight:600; transition:color .15s; }}
+.footer-links a:hover {{ color:{ACCENT}; }}
+.footer-meta {{ color:#5C6579; font-size:.78rem; }}
+
+/* --- Widgets nativos: look de pill --- */
+div[data-baseweb="select"] > div {{ border-radius:10px !important; }}
 </style>
 """, unsafe_allow_html=True)
 
@@ -142,30 +215,6 @@ def load_teams():
 def load_schedules(season):
     df = nfl.load_schedules([season]).filter(pl.col("game_type") == "REG")
     return df.to_pandas()
-
-
-def standings_table(sched, meta):
-    rows = {a: {"W": 0, "L": 0, "T": 0, "PF": 0, "PA": 0} for a in meta}
-    for g in sched.itertuples():
-        h, a = g.home_team, g.away_team
-        hs, as_ = g.home_score, g.away_score
-        if h not in rows or a not in rows or np.isnan(hs) or np.isnan(as_):
-            continue
-        rows[h]["PF"] += hs; rows[h]["PA"] += as_
-        rows[a]["PF"] += as_; rows[a]["PA"] += hs
-        if hs > as_:
-            rows[h]["W"] += 1; rows[a]["L"] += 1
-        elif hs < as_:
-            rows[a]["W"] += 1; rows[h]["L"] += 1
-        else:
-            rows[h]["T"] += 1; rows[a]["T"] += 1
-    out = []
-    for a, r in rows.items():
-        gp = r["W"] + r["L"] + r["T"]
-        pct = (r["W"] + 0.5 * r["T"]) / gp if gp else 0.0
-        out.append({"team": a, **r, "PCT": pct, "DIFF": int(r["PF"] - r["PA"]),
-                    "conf": meta[a]["conf"], "division": meta[a]["div"]})
-    return pd.DataFrame(out).sort_values("PCT", ascending=False).reset_index(drop=True)
 
 
 @st.cache_data(ttl=1800, show_spinner=False)
@@ -229,6 +278,30 @@ def team_stat_tiles(std_row, s):
     ]
 
 
+def standings_table(sched, meta):
+    rows = {a: {"W": 0, "L": 0, "T": 0, "PF": 0, "PA": 0} for a in meta}
+    for g in sched.itertuples():
+        h, a = g.home_team, g.away_team
+        hs, as_ = g.home_score, g.away_score
+        if h not in rows or a not in rows or np.isnan(hs) or np.isnan(as_):
+            continue
+        rows[h]["PF"] += hs; rows[h]["PA"] += as_
+        rows[a]["PF"] += as_; rows[a]["PA"] += hs
+        if hs > as_:
+            rows[h]["W"] += 1; rows[a]["L"] += 1
+        elif hs < as_:
+            rows[a]["W"] += 1; rows[h]["L"] += 1
+        else:
+            rows[h]["T"] += 1; rows[a]["T"] += 1
+    out = []
+    for a, r in rows.items():
+        gp = r["W"] + r["L"] + r["T"]
+        pct = (r["W"] + 0.5 * r["T"]) / gp if gp else 0.0
+        out.append({"team": a, **r, "PCT": pct, "DIFF": int(r["PF"] - r["PA"]),
+                    "conf": meta[a]["conf"], "division": meta[a]["div"]})
+    return pd.DataFrame(out).sort_values("PCT", ascending=False).reset_index(drop=True)
+
+
 def totals_table(pdf, week_range=None):
     d = pdf
     if week_range is not None:
@@ -268,8 +341,9 @@ def leaderboard_html(rows, stat_key):
     for i, r in enumerate(rows):
         pct = max(6, r["value"] / maxv * 100)
         val = f"{r['value']:,.{dec}f}".replace(",", ".")
+        dcls = f"fade-up d{min(i, 9)}"
         out.append(
-            f'<div class="lb-row"><div class="lb-rank {medal.get(i, "")}">{i+1}</div>'
+            f'<div class="lb-row {dcls}"><div class="lb-rank {medal.get(i, "")}">{i+1}</div>'
             f'<img class="lb-photo" src="{r["headshot"]}" />'
             f'<div class="lb-info"><div class="lb-name">{r["name"]}</div>'
             f'<div class="lb-meta">{r["pos"]} · {r["team"]}</div>'
@@ -280,23 +354,67 @@ def leaderboard_html(rows, stat_key):
     return "".join(out)
 
 
-def news_html(items):
-    if not items:
-        return ('<div class="news-card"><div class="news-title">Noticias no '
-                'disponibles ahora mismo.</div></div>')
-    return "".join(
-        f'<a class="news-card" href="{l}" target="_blank">'
-        f'<div class="news-title">{t}</div><div class="news-src">Leer mas →</div></a>'
-        for t, l in items)
+def hero_html(items):
+    src = list(items or FALLBACK_NEWS)[:5]
+    if not src:
+        src = FALLBACK_NEWS
+    while len(src) < 5:
+        src = src + src
+    src = src[:5]
+    slides = []
+    for i, (title, link) in enumerate(src):
+        slides.append(
+            f'<a class="hc-slide" href="{link}" target="_blank" rel="noopener" '
+            f'style="animation-delay:-{i * 5}s; background:{HERO_GRADIENTS[i % len(HERO_GRADIENTS)]}">'
+            f'<div class="hc-tag">🏈 NFL · ÚLTIMA HORA</div>'
+            f'<div class="hc-title">{title}</div>'
+            f'<div class="hc-cta">Leer más →</div></a>'
+        )
+    dots = "".join(f'<span class="hc-dot" style="animation-delay:-{i * 5}s"></span>' for i in range(5))
+    return f'<div class="hero-carousel">{"".join(slides)}<div class="hc-dots">{dots}</div></div>'
+
+
+def section_title(text, sub=None):
+    st.markdown(f'<div class="sect-title">{text}</div>', unsafe_allow_html=True)
+    if sub:
+        st.markdown(f'<div class="sect-sub">{sub}</div>', unsafe_allow_html=True)
+
+
+def render_footer():
+    links = "".join(f'<a href="{u}" target="_blank">{n}</a>' for n, u in REDES.items())
+    st.markdown(f"""
+    <div class="site-footer">
+      <div class="footer-brand"><img src="data:image/png;base64,{LOGO_B64}"/><span>EL PLAYBOOK NFL</span></div>
+      <div class="footer-links">{links}</div>
+      <div class="footer-meta">{G.CANAL} · Datos: nflverse · Hecho con Streamlit</div>
+    </div>
+    """, unsafe_allow_html=True)
 
 
 # ---------------------------------------------------------------------------
-# Barra lateral + cabecera
+# Navbar (marca + navegacion + temporada) — sustituye a la barra lateral
 # ---------------------------------------------------------------------------
-st.sidebar.markdown(
-    f'<div class="side-brand"><img src="data:image/png;base64,{LOGO_B64}"/>'
-    f'<span>EL PLAYBOOK NFL</span></div>', unsafe_allow_html=True)
-season = st.sidebar.selectbox("Temporada", list(range(2026, 1998, -1)), index=0)
+if "page" not in st.session_state:
+    st.session_state.page = "equipos"
+
+nav_l, nav_c, nav_r = st.columns([2.0, 5.9, 1.0], vertical_alignment="center")
+with nav_l:
+    st.markdown(
+        f'<div class="nav-brand"><img src="data:image/png;base64,{LOGO_B64}"/>'
+        f'EL PLAYBOOK <span class="nfl">NFL</span></div>', unsafe_allow_html=True)
+with nav_c:
+    ncols = st.columns(len(PAGES))
+    for col, (key, label) in zip(ncols, PAGES):
+        with col:
+            active = st.session_state.page == key
+            if st.button(label, key=f"nav_{key}", use_container_width=True,
+                         type="primary" if active else "secondary"):
+                st.session_state.page = key
+                st.rerun()
+with nav_r:
+    season = st.selectbox("Temporada", list(range(2026, 1998, -1)), index=0,
+                          label_visibility="collapsed")
+
 pdf = load_season(season)
 teams_df = load_teams()
 teams = G.team_info(teams_df)
@@ -309,108 +427,20 @@ weeks = sorted(pdf["week"].unique().tolist())
 all_names = sorted(pdf.player_display_name.dropna().unique().tolist())
 all_teams = sorted(team_meta.keys())
 
-st.sidebar.markdown("---")
-st.sidebar.markdown("**📣 Sigue al canal**")
-links = "".join(f'<a href="{u}" target="_blank">{n}</a>' for n, u in REDES.items())
-st.sidebar.markdown(f"<div class='contact'>{links}</div>", unsafe_allow_html=True)
-st.sidebar.markdown(f"<br><span style='color:{ACCENT};font-weight:700'>{G.CANAL}</span>",
-                    unsafe_allow_html=True)
-st.sidebar.caption("Datos: nflverse")
+st.markdown(hero_html(get_news(NEWS_FEED)), unsafe_allow_html=True)
 
-st.markdown(f"""
-<div class="hero">
-  <div class="brand"><img class="logo" src="data:image/png;base64,{LOGO_B64}"/>EL PLAYBOOK <span class="nfl">NFL</span></div>
-  <div class="tagline">Datos NFL en español<br>Temporada {season}</div>
-</div>
-""", unsafe_allow_html=True)
-
-tab1, tab_std, tab_teams, tab2, tab3 = st.tabs(
-    ["🏆 Rankings", "📋 Clasificación", "🏟️ Equipos", "📊 Comparar", "👤 Jugadores"])
+page = st.session_state.page
 
 # ---------------------------------------------------------------------------
-# TAB 1 — Rankings + Noticias
+# PAGINA — Equipos (picker + stats del equipo + plantilla)
 # ---------------------------------------------------------------------------
-with tab1:
-    main, side = st.columns([2.4, 1], gap="large")
-    with main:
-        c1, c2, c3 = st.columns([2, 2, 1])
-        stat_label = c1.selectbox("Metrica", [v[1] for v in G.STATS.values()], index=0)
-        stat_key = [k for k, v in G.STATS.items() if v[1] == stat_label][0]
-        ambito = c2.selectbox("Ambito", ["Temporada completa"]
-                              + [f"Jornada {w}" for w in weeks])
-        top_n = c3.slider("Top", 5, 15, 10)
-        week = None if ambito == "Temporada completa" else int(ambito.split()[1])
-        rows = leaderboard_data(pdf, colors, G.STATS[stat_key][0], week, top_n)
-        sub = "Temporada completa" if week is None else f"Jornada {week}"
-        st.markdown(f"<h2 style='margin:.3rem 0 1rem'>{stat_label} · {sub}</h2>",
-                    unsafe_allow_html=True)
-        st.markdown(leaderboard_html(rows, stat_key), unsafe_allow_html=True)
-        with st.expander("⬇️ Descargar como imagen vertical (para subir)"):
-            if st.button("Generar PNG del ranking", type="primary"):
-                with st.spinner("Generando..."):
-                    fig = G.make_ranking(pdf, season, week, stat_key, top_n, teams)
-                    png = G.fig_a_png(fig)
-                st.image(png, width=320)
-                fn = f"ranking_{stat_key}_{season}" + (f"_j{week}" if week else "") + ".png"
-                st.download_button("Descargar PNG", png, file_name=fn, mime="image/png")
-    with side:
-        st.markdown('<div class="news-h">📰 Últimas noticias</div>', unsafe_allow_html=True)
-        st.markdown(news_html(get_news(NEWS_FEED)), unsafe_allow_html=True)
+if page == "equipos":
+    section_title("Equipos", "Elige un equipo para ver su récord, sus stats y su plantilla completa.")
 
-# ---------------------------------------------------------------------------
-# TAB — Clasificación (general y por conferencia/división)
-# ---------------------------------------------------------------------------
-with tab_std:
-    st.markdown("<h2>Clasificación</h2>", unsafe_allow_html=True)
-    vista = st.radio("Vista", ["General", "Por conferencia"], horizontal=True, key="std_scope")
-
-    def _std_block(df, stats):
-        labels = {"PJ": "PJ", "V": "V", "D": "D", "E": "E", "PCT": "%",
-                  "PF": "PF", "PC": "PC", "DIF": "DIF"}
-        head_stats = "".join(f'<div class="std-stat">{labels[s]}</div>' for s in stats)
-        st.markdown(f'<div class="std-head"><div class="std-rank">#</div><div class="std-logo"></div>'
-                    f'<div class="std-team">Equipo</div>{head_stats}</div>', unsafe_allow_html=True)
-        rows = []
-        for i, r in enumerate(df.itertuples(), 1):
-            meta = team_meta[r.team]
-            gp = r.W + r.L + r.T
-            vals = {"PJ": gp, "V": r.W, "D": r.L, "E": r.T, "PCT": f"{r.PCT:.3f}",
-                    "PF": f"{r.PF:.0f}", "PC": f"{r.PA:.0f}", "DIF": f"{r.DIFF:+d}"}
-            stat_html = "".join(f'<div class="std-stat">{vals[s]}</div>' for s in stats)
-            rows.append(
-                f'<div class="std-row"><div class="std-rank">{i}</div>'
-                f'<img class="std-logo" src="{meta["logo"]}"/>'
-                f'<div class="std-team">{meta["name"]} <small>{r.team}</small></div>{stat_html}</div>'
-            )
-        st.markdown("".join(rows), unsafe_allow_html=True)
-
-    if vista == "General":
-        _std_block(standings, ["PJ", "V", "D", "E", "PCT", "PF", "PC", "DIF"])
-    else:
-        for conf in ["AFC", "NFC"]:
-            st.markdown(f'<div class="conf-h">{conf}</div>', unsafe_allow_html=True)
-            cdf = standings[standings.conf == conf]
-            divs = sorted(cdf["division"].unique())
-            dcols = st.columns(2)
-            for i, div in enumerate(divs):
-                with dcols[i % 2]:
-                    st.markdown(f'<div class="div-h">{div}</div>', unsafe_allow_html=True)
-                    ddf = cdf[cdf["division"] == div].sort_values("PCT", ascending=False)
-                    _std_block(ddf, ["V", "D", "E", "DIF"])
-    st.caption("PJ partidos jugados · % porcentaje de victorias · PF/PC puntos a favor/en contra · DIF diferencia de puntos.")
-
-# ---------------------------------------------------------------------------
-# TAB — Equipos (picker + stats del equipo + plantilla)
-# ---------------------------------------------------------------------------
-with tab_teams:
     if ("sel_team" not in st.session_state
             or st.session_state.sel_team not in all_teams):
         st.session_state.sel_team = "BUF" if "BUF" in all_teams else all_teams[0]
 
-    def _pick_team(abbr):
-        st.session_state.sel_team = abbr
-
-    st.markdown("<h2>Equipos</h2>", unsafe_allow_html=True)
     for conf in ["AFC", "NFC"]:
         st.markdown(f'<div class="conf-h">{conf}</div>', unsafe_allow_html=True)
         conf_teams = sorted(a for a in all_teams if team_meta[a]["conf"] == conf)
@@ -418,18 +448,20 @@ with tab_teams:
         for i, abbr in enumerate(conf_teams):
             with cols[i % 8]:
                 meta = team_meta[abbr]
-                st.markdown(f"<div style='text-align:center'><img src='{meta['logo']}' "
-                            f"style='width:44px;height:44px;object-fit:contain'></div>",
+                st.markdown(f"<div class='team-pick'><img src='{meta['logo']}'></div>",
                             unsafe_allow_html=True)
-                st.button(abbr, key=f"team_{abbr}", on_click=_pick_team, args=(abbr,),
-                          use_container_width=True)
+                active = st.session_state.sel_team == abbr
+                if st.button(abbr, key=f"team_{abbr}", use_container_width=True,
+                             type="primary" if active else "secondary"):
+                    st.session_state.sel_team = abbr
+                    st.rerun()
 
     st.markdown("---")
     team = st.session_state.sel_team
     meta = team_meta[team]
     std_rows = standings[standings.team == team]
     st.markdown(f"""
-      <div class="team-hd" style="background:linear-gradient(120deg,{meta['color']}33,transparent)">
+      <div class="team-hd fade-up" style="background:linear-gradient(120deg,{meta['color']}33,transparent)">
         <img src="{meta['logo']}"/>
         <div><div class="tname">{meta['name'].upper()}</div>
         <div class="tmeta">{meta['conf']} · {meta['div']} · Temporada {season}</div></div>
@@ -459,10 +491,80 @@ with tab_teams:
                      use_container_width=True, height=420)
 
 # ---------------------------------------------------------------------------
-# TAB 2 — Comparador
+# PAGINA — Clasificacion (general y por conferencia/division)
 # ---------------------------------------------------------------------------
-with tab2:
-    st.markdown("<h2>Comparador de jugadores</h2>", unsafe_allow_html=True)
+elif page == "clasificacion":
+    section_title("Clasificación", "Récord de la temporada regular, calculado a partir de los resultados oficiales.")
+    vista = st.radio("Vista", ["General", "Por conferencia"], horizontal=True,
+                      key="std_scope", label_visibility="collapsed")
+
+    def _std_block_html(df, stats):
+        labels = {"PJ": "PJ", "V": "V", "D": "D", "E": "E", "PCT": "%",
+                  "PF": "PF", "PC": "PC", "DIF": "DIF"}
+        head_stats = "".join(f'<div class="std-stat">{labels[s]}</div>' for s in stats)
+        head = (f'<div class="std-head"><div class="std-rank">#</div><div class="std-logo"></div>'
+                f'<div class="std-team">Equipo</div>{head_stats}</div>')
+        rows = []
+        for i, r in enumerate(df.itertuples(), 1):
+            meta = team_meta[r.team]
+            gp = r.W + r.L + r.T
+            vals = {"PJ": gp, "V": r.W, "D": r.L, "E": r.T, "PCT": f"{r.PCT:.3f}",
+                    "PF": f"{r.PF:.0f}", "PC": f"{r.PA:.0f}", "DIF": f"{r.DIFF:+d}"}
+            stat_html = "".join(f'<div class="std-stat">{vals[s]}</div>' for s in stats)
+            rows.append(
+                f'<div class="std-row fade-up d{min(i - 1, 9)}"><div class="std-rank">{i}</div>'
+                f'<img class="std-logo" src="{meta["logo"]}"/>'
+                f'<div class="std-team">{meta["name"]} <small>{r.team}</small></div>{stat_html}</div>'
+            )
+        return head + "".join(rows)
+
+    if vista == "General":
+        st.markdown(_std_block_html(standings, ["PJ", "V", "D", "E", "PCT", "PF", "PC", "DIF"]),
+                    unsafe_allow_html=True)
+    else:
+        for conf in ["AFC", "NFC"]:
+            st.markdown(f'<div class="conf-h">{conf}</div>', unsafe_allow_html=True)
+            cdf = standings[standings.conf == conf]
+            divs = sorted(cdf["division"].unique())
+            blocks = []
+            for div in divs:
+                ddf = cdf[cdf["division"] == div].sort_values("PCT", ascending=False)
+                blocks.append(
+                    f'<div class="div-block"><div class="div-h">{div}</div>'
+                    f'{_std_block_html(ddf, ["V", "D", "E", "DIF"])}</div>'
+                )
+            st.markdown(f'<div class="div-grid">{"".join(blocks)}</div>', unsafe_allow_html=True)
+    st.caption("PJ partidos jugados · % porcentaje de victorias · PF/PC puntos a favor/en contra · DIF diferencia de puntos.")
+
+# ---------------------------------------------------------------------------
+# PAGINA — Rankings
+# ---------------------------------------------------------------------------
+elif page == "rankings":
+    section_title("Rankings", "Los lideres de la temporada, jornada a jornada o acumulados.")
+    c1, c2, c3 = st.columns([2, 2, 1])
+    stat_label = c1.selectbox("Metrica", [v[1] for v in G.STATS.values()], index=0)
+    stat_key = [k for k, v in G.STATS.items() if v[1] == stat_label][0]
+    ambito = c2.selectbox("Ambito", ["Temporada completa"] + [f"Jornada {w}" for w in weeks])
+    top_n = c3.slider("Top", 5, 15, 10)
+    week = None if ambito == "Temporada completa" else int(ambito.split()[1])
+    rows = leaderboard_data(pdf, colors, G.STATS[stat_key][0], week, top_n)
+    sub = "Temporada completa" if week is None else f"Jornada {week}"
+    st.markdown(f"<h3 style='margin:.6rem 0 1rem'>{stat_label} · {sub}</h3>", unsafe_allow_html=True)
+    st.markdown(leaderboard_html(rows, stat_key), unsafe_allow_html=True)
+    with st.expander("⬇️ Descargar como imagen vertical (para subir)"):
+        if st.button("Generar PNG del ranking", type="primary"):
+            with st.spinner("Generando..."):
+                fig = G.make_ranking(pdf, season, week, stat_key, top_n, teams)
+                png = G.fig_a_png(fig)
+            st.image(png, width=320)
+            fn = f"ranking_{stat_key}_{season}" + (f"_j{week}" if week else "") + ".png"
+            st.download_button("Descargar PNG", png, file_name=fn, mime="image/png")
+
+# ---------------------------------------------------------------------------
+# PAGINA — Comparador
+# ---------------------------------------------------------------------------
+elif page == "comparar":
+    section_title("Comparador", "Enfrenta a dos o mas jugadores cara a cara.")
     scope = st.radio("Ambito", ["Temporada completa", "Rango de jornadas"],
                      horizontal=True, key="cmp_scope")
     wr = None
@@ -520,9 +622,11 @@ with tab2:
         st.caption("El radar normaliza cada eje respecto al mejor de los elegidos.")
 
 # ---------------------------------------------------------------------------
-# TAB 3 — Jugadores (buscador + estrellas + ficha con tarjeta)
+# PAGINA — Jugadores (buscador + estrellas + ficha con tarjeta)
 # ---------------------------------------------------------------------------
-with tab3:
+elif page == "jugadores":
+    section_title("Jugadores", "Busca cualquier jugador y genera su tarjeta.")
+
     if ("sel_player" not in st.session_state
             or st.session_state.sel_player not in all_names):
         st.session_state.sel_player = ("Josh Allen" if "Josh Allen" in all_names
@@ -531,12 +635,11 @@ with tab3:
     def _pick(name):
         st.session_state.sel_player = name
 
-    st.markdown("<h2>Jugadores</h2>", unsafe_allow_html=True)
     st.selectbox("🔍 Busca cualquier jugador", all_names, key="sel_player")
 
     famosos = [n for n in FAMOSOS if n in all_names][:6]
     if famosos:
-        st.markdown("<div class='news-h'>⭐ Destacados</div>", unsafe_allow_html=True)
+        st.markdown("<div class='conf-h'>⭐ Destacados</div>", unsafe_allow_html=True)
         cols = st.columns(len(famosos))
         for col, name in zip(cols, famosos):
             with col:
@@ -553,7 +656,7 @@ with tab3:
     player = st.session_state.sel_player
     info = player_season(pdf, player)
     st.markdown(f"""
-      <div class="prof-hd">
+      <div class="prof-hd fade-up">
         <img src="{info['headshot']}"/>
         <div><div class="prof-name">{player.upper()}</div>
         <div class="prof-meta">{info['pos']} · {info['team']} · Temporada {season}</div></div>
@@ -580,3 +683,5 @@ with tab3:
         st.image(png, width=340)
         fn = f"tarjeta_{player.lower().replace(' ', '_')}_{season}.png"
         st.download_button("⬇️ Descargar PNG", png, file_name=fn, mime="image/png")
+
+render_footer()
