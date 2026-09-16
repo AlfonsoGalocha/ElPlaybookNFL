@@ -29,8 +29,8 @@ from analytics.games import completed_week, featured_game, highlight_week
 from analytics.matchups import with_percentiles
 from analytics.standings import standings_table, team_meta_table
 from components import footer, navbar
-from components.hero import brand_slide, duel_slide, hero_html, player_slide, top_teams_slide
-from components.leaderboard import leaderboard_data
+from components.hero import leader_widget_html, matchup_widget_html, news_widget_html
+from components.navbar import go_to
 from components.styles import css_block
 from data.loaders import get_news, load_pbp, load_schedules, load_season, load_teams
 
@@ -56,15 +56,9 @@ all_teams = sorted(team_meta.keys())
 
 page = st.session_state.get("page", navbar.DEFAULT_PAGE)
 
-feature_slides = [brand_slide(LOGO_B64, i=0)]
-
-top3 = standings.sort_values("PCT", ascending=False).head(3)
-if len(top3) >= 3:
-    top3_data = [(r.team, team_meta[r.team]["name"], team_meta[r.team]["logo"]) for r in top3.itertuples()]
-    feature_slides.append(top_teams_slide(top3_data, i=len(feature_slides)))
-
 weekly_week, weekly_duel = None, None
 pbp = load_pbp(season)
+pct = None
 if pbp is not None and not pbp.empty:
     eff = team_efficiency_table(pbp).dropna(subset=["off_epa_play", "def_epa_play"])
     pct = with_percentiles(eff) if len(eff) >= 2 else None
@@ -78,26 +72,47 @@ if pbp is not None and not pbp.empty:
             if fg:
                 _g, weekly_duel = fg
 
-    hero_week = weekly_week if page == "weekly" else highlight_week(sched)
-    week_games = sched[sched.week == hero_week] if hero_week is not None else sched.iloc[0:0]
-    if pct is not None and not week_games.empty:
+hero_week = weekly_week if page == "weekly" else highlight_week(sched)
+
+# Widget dinamico de la derecha del hero: Partido de la Semana > lider de la
+# clasificacion > ultima noticia — el primero con datos suficientes gana.
+widget_html = None
+if pct is not None and hero_week is not None:
+    week_games = sched[sched.week == hero_week]
+    if not week_games.empty:
         fg = featured_game(week_games, pct)
         if fg:
             g, _d = fg
-            feature_slides.append(duel_slide(
-                hero_week,
-                {"abbr": g.away_team, "logo": team_meta[g.away_team]["logo"]},
-                {"abbr": g.home_team, "logo": team_meta[g.home_team]["logo"]},
-                i=len(feature_slides)))
+            away = {"abbr": g.away_team, "name": team_meta[g.away_team]["name"],
+                    "logo": team_meta[g.away_team]["logo"]}
+            home = {"abbr": g.home_team, "name": team_meta[g.home_team]["name"],
+                    "logo": team_meta[g.home_team]["logo"]}
+            widget_html = matchup_widget_html("🔥 PARTIDO DE LA SEMANA", hero_week, away, home)
 
-top_passers = leaderboard_data(pdf, colors, "passing_yards", None, 1)
-if top_passers:
-    p = top_passers[0]
-    feature_slides.append(player_slide(
-        p["name"], p["headshot"], "Yardas de pase esta temporada",
-        f"{p['value']:,.0f}".replace(",", "."), i=len(feature_slides)))
+if widget_html is None and not standings.empty:
+    leader = standings.iloc[0]
+    lmeta = team_meta[leader.team]
+    record = f"{int(leader.W)}-{int(leader.L)}-{int(leader.T)} · {leader.PCT:.3f} PCT"
+    widget_html = leader_widget_html("🏆 LÍDER DE LA CLASIFICACIÓN", lmeta["name"], lmeta["logo"], record)
 
-st.markdown(hero_html(feature_slides, get_news()), unsafe_allow_html=True)
+if widget_html is None:
+    news = get_news()
+    title, link = news[0] if news else ("Bienvenido a El Playbook NFL", "#")
+    widget_html = news_widget_html("📰 ÚLTIMA HORA", title, link)
+
+with st.container(key="hero_banner"):
+    hero_l, hero_r = st.columns([3, 2], vertical_alignment="center")
+    with hero_l:
+        st.markdown(
+            '<div class="hero-badge">🏈 NFL · ÚLTIMA HORA</div>'
+            '<div class="hero-headline">RANKINGS, CLASIFICACIÓN Y EQUIPOS EN UN SOLO LUGAR</div>'
+            '<div class="hero-sub">Entiende la NFL de verdad: clasificación en vivo, análisis de cada '
+            'equipo y las estadísticas que importan, todo en un solo lugar.</div>',
+            unsafe_allow_html=True)
+        if st.button("Ver la clasificación completa →", type="primary"):
+            go_to("clasificacion")
+    with hero_r:
+        st.markdown(widget_html, unsafe_allow_html=True)
 
 ctx = SimpleNamespace(
     season=season, pdf=pdf, teams_df=teams_df, teams=teams, colors=colors,
