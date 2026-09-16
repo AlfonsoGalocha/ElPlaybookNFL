@@ -139,6 +139,33 @@ def _download_headshot(url):
         return None
 
 
+STAT_COLS = [
+    "completions", "attempts", "passing_yards", "passing_tds", "passing_interceptions",
+    "carries", "rushing_yards", "rushing_tds",
+    "receptions", "targets", "receiving_yards", "receiving_tds",
+    "def_tackles_solo", "def_tackles_with_assist", "def_tackles_for_loss",
+    "def_sacks", "def_qb_hits", "def_interceptions", "def_pass_defended",
+    "def_fumbles_forced", "def_tds",
+    "fg_made", "fg_att", "fg_long", "pat_made", "pat_att",
+    "pt_att", "pt_yards", "pt_long",
+]
+
+DEF_POSITIONS = {"CB", "DB", "DE", "DL", "DT", "FS", "ILB", "LB", "MLB",
+                  "NT", "OLB", "S", "SAF", "EDGE"}
+
+
+MAX_COLS = {"fg_long", "pt_long"}   # marcas (record de la temporada), no se suman
+
+
+def player_totals(p):
+    """Suma (o toma el maximo, para records) las columnas de stats de un jugador."""
+    def agg(c):
+        if c not in p.columns:
+            return 0
+        return p[c].max() if c in MAX_COLS else p[c].sum()
+    return {c: agg(c) for c in STAT_COLS}
+
+
 def _tiles(pos, s):
     comp_pct = (s["completions"] / s["attempts"] * 100) if s["attempts"] else 0
     ypc = (s["rushing_yards"] / s["carries"]) if s["carries"] else 0
@@ -156,6 +183,22 @@ def _tiles(pos, s):
         return [("RECEPC.", _fmt(s["receptions"])), ("OBJETIVOS", _fmt(s["targets"])),
                 ("YDS RECEP.", _fmt(s["receiving_yards"])), ("TD RECEP.", _fmt(s["receiving_tds"])),
                 ("YDS/RECEP.", _fmt(ypr, 1)), ("TD TIERRA", _fmt(s["rushing_tds"]))]
+    if pos in DEF_POSITIONS:
+        tackles = s["def_tackles_solo"] + s["def_tackles_with_assist"]
+        return [("TACLEOS", _fmt(tackles)), ("SACKS", _fmt(s["def_sacks"], 1)),
+                ("TACKLES P/PERDIDA", _fmt(s["def_tackles_for_loss"])),
+                ("PRESIONES QB", _fmt(s["def_qb_hits"])),
+                ("INTERCEP.", _fmt(s["def_interceptions"])),
+                ("PASES DEFEND.", _fmt(s["def_pass_defended"]))]
+    if pos == "K":
+        fg_pct = (s["fg_made"] / s["fg_att"] * 100) if s["fg_att"] else 0
+        return [("FG ANOTADOS", _fmt(s["fg_made"])), ("FG INTENTADOS", _fmt(s["fg_att"])),
+                ("% FG", _fmt(fg_pct, 1)), ("FG MAS LARGO", _fmt(s["fg_long"])),
+                ("PAT ANOTADOS", _fmt(s["pat_made"])), ("PAT INTENTADOS", _fmt(s["pat_att"]))]
+    if pos == "P":
+        avg = (s["pt_yards"] / s["pt_att"]) if s["pt_att"] else 0
+        return [("DESPEJES", _fmt(s["pt_att"])), ("YARDAS", _fmt(s["pt_yards"])),
+                ("PROMEDIO", _fmt(avg, 1)), ("MAS LARGO", _fmt(s["pt_long"]))]
     return [("YDS PASE", _fmt(s["passing_yards"])), ("YDS TIERRA", _fmt(s["rushing_yards"])),
             ("YDS RECEP.", _fmt(s["receiving_yards"])),
             ("TD TOTAL", _fmt(s["passing_tds"] + s["rushing_tds"] + s["receiving_tds"]))]
@@ -163,10 +206,7 @@ def _tiles(pos, s):
 
 def make_card(pdf, season, name, teams, modo="circulo", foto_array=None):
     p = pdf[pdf["player_display_name"] == name]
-    cols = ["completions", "attempts", "passing_yards", "passing_tds",
-            "passing_interceptions", "carries", "rushing_yards", "rushing_tds",
-            "receptions", "targets", "receiving_yards", "receiving_tds"]
-    s = {c: p[c].sum() for c in cols}
+    s = player_totals(p)
     position = _mode(p["position"])
     team = _mode(p["team"])
     heads = p["headshot_url"].dropna()

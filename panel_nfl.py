@@ -9,6 +9,7 @@ panel_nfl.py — EL PLAYBOOK NFL · panel interactivo
 Lanzar:  streamlit run panel_nfl.py
 """
 
+import base64
 import urllib.request
 import xml.etree.ElementTree as ET
 
@@ -49,7 +50,10 @@ RADAR_AXES = {"Pase (yds)": "passing_yards", "Carrera (yds)": "rushing_yards",
               "Recepcion (yds)": "receiving_yards", "TD totales": "total_tds",
               "1os downs": "first_downs_total"}
 
-st.set_page_config(page_title="El Playbook NFL", page_icon="🏈", layout="wide")
+LOGO_PATH = "logo.png"
+LOGO_B64 = base64.b64encode(open(LOGO_PATH, "rb").read()).decode()
+
+st.set_page_config(page_title="El Playbook NFL", page_icon=LOGO_PATH, layout="wide")
 
 st.markdown("""
 <style>
@@ -60,10 +64,13 @@ html, body, [class*="css"] { font-family:'Inter', sans-serif; }
 .block-container { padding-top:1.1rem; max-width:1320px; }
 h1,h2,h3 { font-family:'Oswald', sans-serif; letter-spacing:.5px; color:#fff; }
 .hero { display:flex; align-items:center; justify-content:space-between; padding-bottom:.6rem; margin-bottom:.3rem; border-bottom:1px solid rgba(255,255,255,.07); }
-.brand { font-family:'Oswald'; font-weight:700; font-size:2rem; letter-spacing:1px; color:#fff; display:flex; align-items:center; gap:.55rem; }
+.brand { font-family:'Oswald'; font-weight:700; font-size:2rem; letter-spacing:1px; color:#fff; display:flex; align-items:center; gap:.6rem; }
 .brand .nfl { background:linear-gradient(135deg,#00E5A0,#12B8FF); color:#0B0E14; padding:.02rem .5rem; border-radius:9px; }
-.brand .ball { font-size:1.7rem; }
+.brand .logo { height:46px; width:46px; border-radius:50%; object-fit:cover; box-shadow:0 0 0 2px rgba(255,255,255,.15); }
 .tagline { color:#8A93A6; font-size:.9rem; text-align:right; }
+.side-brand { display:flex; align-items:center; gap:10px; margin-bottom:.2rem; }
+.side-brand img { width:40px; height:40px; border-radius:50%; object-fit:cover; box-shadow:0 0 0 2px rgba(255,255,255,.15); }
+.side-brand span { font-family:'Oswald'; font-weight:700; font-size:1.05rem; letter-spacing:.5px; color:#fff; }
 .stTabs [data-baseweb="tab-list"] { gap:.2rem; border-bottom:1px solid rgba(255,255,255,.08); }
 .stTabs [data-baseweb="tab"] { font-family:'Oswald'; font-size:1.05rem; letter-spacing:.5px; }
 .stTabs [aria-selected="true"] { color:#00E5A0 !important; }
@@ -137,14 +144,11 @@ def headshot_of(pdf, name):
 
 def player_season(pdf, name):
     p = pdf[pdf.player_display_name == name]
-    g = lambda c: int(p[c].sum())
+    pos = _mode(p["position"])
     return {
-        "pos": _mode(p["position"]), "team": _mode(p["team"]),
+        "pos": pos, "team": _mode(p["team"]),
         "headshot": headshot_of(pdf, name),
-        "Yds pase": g("passing_yards"), "TD pase": g("passing_tds"),
-        "Yds tierra": g("rushing_yards"), "TD tierra": g("rushing_tds"),
-        "Yds recep.": g("receiving_yards"),
-        "TD tot.": g("passing_tds") + g("rushing_tds") + g("receiving_tds"),
+        "tiles": G._tiles(pos, G.player_totals(p)),
     }
 
 
@@ -212,7 +216,9 @@ def news_html(items):
 # ---------------------------------------------------------------------------
 # Barra lateral + cabecera
 # ---------------------------------------------------------------------------
-st.sidebar.markdown("### 🏈 EL PLAYBOOK NFL")
+st.sidebar.markdown(
+    f'<div class="side-brand"><img src="data:image/png;base64,{LOGO_B64}"/>'
+    f'<span>EL PLAYBOOK NFL</span></div>', unsafe_allow_html=True)
 season = st.sidebar.selectbox("Temporada", list(range(2026, 1998, -1)), index=0)
 pdf = load_season(season)
 teams_df = load_teams()
@@ -231,7 +237,7 @@ st.sidebar.caption("Datos: nflverse")
 
 st.markdown(f"""
 <div class="hero">
-  <div class="brand"><span class="ball">🏈</span>EL PLAYBOOK <span class="nfl">NFL</span></div>
+  <div class="brand"><img class="logo" src="data:image/png;base64,{LOGO_B64}"/>EL PLAYBOOK <span class="nfl">NFL</span></div>
   <div class="tagline">Datos NFL en español<br>Temporada {season}</div>
 </div>
 """, unsafe_allow_html=True)
@@ -369,10 +375,10 @@ with tab3:
         <div class="prof-meta">{info['pos']} · {info['team']} · Temporada {season}</div></div>
       </div>""", unsafe_allow_html=True)
 
-    m = st.columns(6)
-    for col, key in zip(m, ["Yds pase", "TD pase", "Yds tierra", "TD tierra",
-                            "Yds recep.", "TD tot."]):
-        col.metric(key, f"{info[key]:,}".replace(",", "."))
+    tiles = info["tiles"]
+    m = st.columns(len(tiles))
+    for col, (label, value) in zip(m, tiles):
+        col.metric(label, value)
 
     st.markdown("#### 🪪 Genera su tarjeta")
     cc1, cc2 = st.columns([1, 1])
