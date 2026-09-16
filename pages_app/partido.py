@@ -10,8 +10,10 @@ import streamlit as st
 
 import nfl_graficos as G
 from analytics.efficiency import team_efficiency_table
+from analytics.explanations import breakdown_insight, epa_breakdown
 from analytics.game_summary import game_pbp, key_factors, quarter_epa_evolution, team_boxscore
 from analytics.matchups import duelo_clave, with_percentiles
+from components.explanation import why_expander
 from data.loaders import load_pbp
 
 FG, ACCENT = G.FG, G.ACCENT
@@ -111,6 +113,17 @@ def render(ctx):
             st.markdown("#### 🔑 Claves del partido")
             for f in factors:
                 st.markdown(f"- {f}")
+
+        bd_home = epa_breakdown(gp[gp.posteam == home])
+        bd_away = epa_breakdown(gp[gp.posteam == away])
+        if bd_home or bd_away:
+            c1, c2 = st.columns(2)
+            with c1:
+                why_expander(bd_home, breakdown_insight(bd_home, subject=f"El ataque de {home_name}"),
+                             label=f"¿Por qué? · {home_name}")
+            with c2:
+                why_expander(bd_away, breakdown_insight(bd_away, subject=f"El ataque de {away_name}"),
+                             label=f"¿Por qué? · {away_name}")
     else:
         st.info("No hay estadísticas de equipo suficientes para este partido en el play-by-play.")
 

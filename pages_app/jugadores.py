@@ -10,8 +10,10 @@ from analytics.context import position_population as _position_population
 from analytics.efficiency import (
     league_epa_by_position, player_recent_vs_season, player_season_epa, player_weekly_epa,
 )
+from analytics.explanations import breakdown_insight, epa_breakdown
 from analytics.totals import full_totals_table, headline_stat, player_season
 from analytics.utils import headshot_of, mode
+from components.explanation import why_expander
 from components.stat_context import stat_context_html
 from data.loaders import load_pbp
 
@@ -40,6 +42,7 @@ def _context_row(ctx, player, pos):
             cards.append(stat_context_html(label.upper(), f"{value:,.0f}".replace(",", "."), c,
                                            subject=player, decimals=0))
 
+    pid = None
     pbp = load_pbp(ctx.season)
     if pbp is not None and not pbp.empty:
         league_epa = league_epa_by_position(pbp, pos)
@@ -59,6 +62,11 @@ def _context_row(ctx, player, pos):
     cols = st.columns(len(cards))
     for col, html in zip(cols, cards):
         col.markdown(html, unsafe_allow_html=True)
+
+    if (pos or "").upper() == "QB" and pid is not None:
+        player_plays = pbp[(pbp.passer_player_id == pid) | (pbp.rusher_player_id == pid)]
+        bd = epa_breakdown(player_plays)
+        why_expander(bd, breakdown_insight(bd, subject=f"El rendimiento ofensivo de {player}"))
 
 
 def _evolution_chart(ctx, player, pos):

@@ -181,6 +181,13 @@ div[class*="st-key-roster_"] button:hover {{
 .sxc-insight {{ color:#C9D2DE; font-size:.82rem; margin-top:10px; line-height:1.35; }}
 .sxc-pop {{ color:#5C6579; font-size:.7rem; margin-top:6px; }}
 
+/* --- "¿Por qué?" (desglose deterministico) --- */
+.why-box {{ padding:4px 2px 2px; }}
+.why-row {{ display:flex; justify-content:space-between; padding:7px 0; border-bottom:1px solid rgba(255,255,255,.06); font-size:.86rem; }}
+.why-row:last-of-type {{ border-bottom:none; }}
+.why-label {{ color:#8A93A6; }}
+.why-value {{ font-family:'Oswald'; font-weight:600; color:#fff; }}
+
 /* --- Footer --- */
 .site-footer {{ margin-top:3rem; padding:2rem 0 1.4rem; border-top:1px solid rgba(255,255,255,.08); text-align:center; }}
 .footer-brand {{ display:flex; align-items:center; justify-content:center; gap:10px; margin-bottom:.9rem; }}

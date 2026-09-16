@@ -4,7 +4,9 @@ import streamlit as st
 
 import nfl_graficos as G
 from analytics.efficiency import team_efficiency_table, team_situational_table
+from analytics.explanations import breakdown_insight, epa_breakdown
 from analytics.matchups import duelo_clave, with_percentiles
+from components.explanation import why_expander
 from data.loaders import load_pbp, load_pfr
 
 ACCENT, ACCENT2 = G.ACCENT, G.ACCENT2
@@ -74,6 +76,12 @@ def render(ctx):
     c1, c2 = st.columns(2)
     with c1:
         _vs_card("EPA/jugada (ataque)", a_row.off_epa_play, b_row.off_epa_play, team_a, team_b)
+        bd_a = epa_breakdown(pbp[pbp.posteam == team_a])
+        why_expander(bd_a, breakdown_insight(bd_a, subject=f"El ataque de {team_a}"),
+                     label=f"¿Por qué? · {team_a}")
+        bd_b = epa_breakdown(pbp[pbp.posteam == team_b])
+        why_expander(bd_b, breakdown_insight(bd_b, subject=f"El ataque de {team_b}"),
+                     label=f"¿Por qué? · {team_b}")
     with c2:
         _vs_card("% de jugadas exitosas (ataque)", a_row.off_success, b_row.off_success,
                   team_a, team_b, fmt="{:.1%}")
