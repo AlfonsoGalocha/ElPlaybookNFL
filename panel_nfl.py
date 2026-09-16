@@ -137,14 +137,11 @@ def headshot_of(pdf, name):
 
 def player_season(pdf, name):
     p = pdf[pdf.player_display_name == name]
-    g = lambda c: int(p[c].sum())
+    pos = _mode(p["position"])
     return {
-        "pos": _mode(p["position"]), "team": _mode(p["team"]),
+        "pos": pos, "team": _mode(p["team"]),
         "headshot": headshot_of(pdf, name),
-        "Yds pase": g("passing_yards"), "TD pase": g("passing_tds"),
-        "Yds tierra": g("rushing_yards"), "TD tierra": g("rushing_tds"),
-        "Yds recep.": g("receiving_yards"),
-        "TD tot.": g("passing_tds") + g("rushing_tds") + g("receiving_tds"),
+        "tiles": G._tiles(pos, G.player_totals(p)),
     }
 
 
@@ -369,10 +366,10 @@ with tab3:
         <div class="prof-meta">{info['pos']} · {info['team']} · Temporada {season}</div></div>
       </div>""", unsafe_allow_html=True)
 
-    m = st.columns(6)
-    for col, key in zip(m, ["Yds pase", "TD pase", "Yds tierra", "TD tierra",
-                            "Yds recep.", "TD tot."]):
-        col.metric(key, f"{info[key]:,}".replace(",", "."))
+    tiles = info["tiles"]
+    m = st.columns(len(tiles))
+    for col, (label, value) in zip(m, tiles):
+        col.metric(label, value)
 
     st.markdown("#### 🪪 Genera su tarjeta")
     cc1, cc2 = st.columns([1, 1])
