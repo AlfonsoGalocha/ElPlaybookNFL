@@ -10,8 +10,8 @@ def css_block():
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap');
 html, body, [class*="css"] {{ font-family:'Inter', sans-serif; }}
-.stApp {{ background: radial-gradient(1200px 560px at 12% -12%, #2a1420 0%, #0B0E14 45%),
-                       radial-gradient(1000px 480px at 100% 0%, #0e2438 0%, #0B0E14 55%); color:#E9EDF5; }}
+.stApp {{ background: radial-gradient(1200px 560px at 12% -12%, #35203a 0%, #171B24 45%),
+                       radial-gradient(1000px 480px at 100% 0%, #163756 0%, #171B24 55%); color:#E9EDF5; }}
 #MainMenu, footer, header {{ visibility:hidden; }}
 .block-container {{ padding-top:1rem; padding-bottom:0; padding-left:2.2rem; padding-right:2.2rem; max-width:1680px; }}
 h1,h2,h3 {{ font-family:'Oswald', sans-serif; letter-spacing:.5px; color:#fff; }}
@@ -25,7 +25,7 @@ h1,h2,h3 {{ font-family:'Oswald', sans-serif; letter-spacing:.5px; color:#fff; }
 /* --- Navbar --- */
 .navbar {{ display:flex; align-items:center; gap:14px; padding:.3rem 0 .6rem; }}
 .nav-brand {{ font-family:'Oswald'; font-weight:700; font-size:1.22rem; letter-spacing:.5px; color:#fff; display:flex; align-items:center; gap:.4rem; white-space:nowrap; overflow:hidden; }}
-.nav-brand img {{ height:32px; width:32px; min-width:32px; border-radius:50%; object-fit:cover; box-shadow:0 0 0 2px rgba(255,255,255,.18); }}
+.nav-brand img {{ height:46px; width:46px; min-width:46px; border-radius:50%; object-fit:cover; box-shadow:0 0 0 2px rgba(255,255,255,.18); }}
 .nav-brand .nfl {{ background:linear-gradient(135deg,{ACCENT},{ACCENT2}); color:#fff; padding:.02rem .4rem; border-radius:6px; font-size:.95rem; }}
 :where(div[data-testid="stHorizontalBlock"] div[data-testid="stButton"] button) {{
     border-radius:999px !important; font-family:'Oswald'; font-size:.78rem; letter-spacing:.2px;
@@ -53,6 +53,17 @@ h1,h2,h3 {{ font-family:'Oswald', sans-serif; letter-spacing:.5px; color:#fff; }
 .hc-dots {{ position:absolute; bottom:14px; right:20px; display:flex; gap:6px; }}
 .hc-dot {{ width:22px; height:4px; border-radius:3px; background:rgba(255,255,255,.25); animation:hcDot 25s infinite; }}
 @keyframes hcDot {{ 0%{{background:#fff}} 16%{{background:#fff}} 20%{{background:rgba(255,255,255,.25)}} 100%{{background:rgba(255,255,255,.25)}} }}
+.hc-brand-row {{ display:flex; align-items:center; gap:16px; margin-bottom:2px; }}
+.hc-logo {{ height:64px; width:64px; min-width:64px; border-radius:50%; object-fit:cover; box-shadow:0 0 0 3px rgba(255,255,255,.28); }}
+.hc-teams-row {{ display:flex; gap:14px; margin-bottom:10px; }}
+.hc-team {{ display:flex; flex-direction:column; align-items:center; gap:4px; }}
+.hc-team img {{ height:52px; width:52px; object-fit:contain; background:rgba(255,255,255,.10); border-radius:50%; padding:6px; }}
+.hc-team div {{ font-family:'Oswald'; font-weight:700; color:#fff; font-size:.82rem; }}
+.hc-vs-row {{ display:flex; align-items:center; gap:18px; margin-bottom:10px; }}
+.hc-vs-logo {{ height:58px; width:58px; object-fit:contain; background:rgba(255,255,255,.10); border-radius:50%; padding:8px; }}
+.hc-vs-text {{ font-family:'Bebas Neue'; font-size:1.6rem; color:#fff; opacity:.85; }}
+.hc-player-row {{ display:flex; align-items:center; gap:16px; }}
+.hc-player-photo {{ height:78px; width:78px; min-width:78px; border-radius:50%; object-fit:cover; border:3px solid rgba(255,255,255,.3); background:#222; }}
 
 /* --- Titulos de seccion --- */
 .sect-title {{ font-family:'Bebas Neue'; font-size:2.1rem; letter-spacing:1px; color:#fff; margin:.1rem 0 .2rem;
@@ -62,7 +73,7 @@ h1,h2,h3 {{ font-family:'Oswald', sans-serif; letter-spacing:.5px; color:#fff; }
 .sect-sub {{ color:#8A93A6; font-size:.92rem; margin:.3rem 0 1.1rem; }}
 
 /* --- Cards genericas --- */
-.lb-row, .std-row, .news-card {{ background:#131A26; border:1px solid rgba(255,255,255,.05); border-radius:14px;
+.lb-row, .std-row, .news-card {{ background:#1B2230; border:1px solid rgba(255,255,255,.05); border-radius:14px;
     transition:transform .15s, border-color .15s; }}
 .lb-row {{ display:flex; align-items:center; gap:14px; padding:10px 16px; margin-bottom:10px; }}
 .lb-row:hover {{ transform:translateX(4px); border-color:rgba(228,32,60,.5); }}
@@ -127,7 +138,7 @@ div[class*="st-key-roster_"] button:hover {{
 .div-block {{ margin-bottom:1.2rem; }}
 
 /* --- Laboratorio / Tendencias / Matchups / Football IQ / Quiz --- */
-.stat-card {{ background:#131A26; border:1px solid rgba(255,255,255,.06); border-radius:14px; padding:16px 18px; height:100%; }}
+.stat-card {{ background:#1B2230; border:1px solid rgba(255,255,255,.06); border-radius:14px; padding:16px 18px; height:100%; }}
 .stat-card .sc-label {{ color:#8A93A6; font-size:.72rem; letter-spacing:.5px; text-transform:uppercase; font-weight:600; }}
 .stat-card .sc-value {{ font-family:'Oswald'; font-weight:700; font-size:1.6rem; color:#fff; margin-top:4px; }}
 .up-badge {{ color:#3ED598; font-weight:700; }} .down-badge {{ color:{ACCENT}; font-weight:700; }}
@@ -141,11 +152,11 @@ div[class*="st-key-roster_"] button:hover {{
 .iq-rookie {{ background:#1FA3E822; color:#1FA3E8; border:1px solid #1FA3E855; }}
 .iq-aficionado {{ background:#FFD54A22; color:#FFD54A; border:1px solid #FFD54A55; }}
 .iq-avanzado {{ background:{ACCENT}22; color:{ACCENT}; border:1px solid {ACCENT}55; }}
-.term-card {{ background:#131A26; border:1px solid rgba(255,255,255,.06); border-radius:14px; padding:16px 18px; margin-bottom:12px; }}
+.term-card {{ background:#1B2230; border:1px solid rgba(255,255,255,.06); border-radius:14px; padding:16px 18px; margin-bottom:12px; }}
 .term-card .tc-term {{ font-family:'Oswald'; font-weight:700; font-size:1.1rem; color:#fff; }}
 .term-card .tc-def {{ color:#C9D2DE; font-size:.9rem; margin-top:4px; }}
 .term-card .tc-example {{ color:#8A93A6; font-size:.84rem; margin-top:6px; font-style:italic; }}
-.quiz-card {{ background:#131A26; border:1px solid rgba(255,255,255,.08); border-radius:16px; padding:20px 24px; margin-bottom:1rem; }}
+.quiz-card {{ background:#1B2230; border:1px solid rgba(255,255,255,.08); border-radius:16px; padding:20px 24px; margin-bottom:1rem; }}
 .quiz-score {{ font-family:'Bebas Neue'; font-size:3rem; color:{ACCENT}; text-align:center; }}
 
 /* --- Footer --- */
