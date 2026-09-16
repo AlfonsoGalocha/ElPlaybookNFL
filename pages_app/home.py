@@ -7,7 +7,8 @@ import pandas as pd
 import streamlit as st
 
 from analytics.efficiency import team_efficiency_table
-from analytics.matchups import duelo_clave, with_percentiles
+from analytics.games import featured_game, highlight_week
+from analytics.matchups import with_percentiles
 from analytics.trends import MIN_WEEKS_FOR_TREND, trend_table, weekly_team_epa
 from components.navbar import go_to
 from data.loaders import load_pbp
@@ -23,13 +24,6 @@ def _madrid_time(gameday, gametime):
         return eastern.astimezone(ZoneInfo("Europe/Madrid"))
     except Exception:
         return None
-
-
-def _highlight_week(sched):
-    unplayed = sched[sched.home_score.isna()]
-    if len(unplayed):
-        return int(unplayed.week.min())
-    return int(sched.week.max())
 
 
 def _game_card(g, team_meta):
@@ -67,9 +61,16 @@ def render(ctx):
     st.markdown('<div class="sect-title">Esta semana en la NFL</div>', unsafe_allow_html=True)
     st.markdown('<div class="sect-sub">Entiende la NFL. No solo la sigas.</div>', unsafe_allow_html=True)
 
-    week = _highlight_week(ctx.sched)
+    week_options = sorted(ctx.sched.week.unique().tolist())
+    current_week = highlight_week(ctx.sched)
+    hc1, hc2 = st.columns([3, 1])
+    with hc1:
+        st.markdown("#### Jornada · horarios en España")
+    with hc2:
+        week = st.selectbox("Jornada", week_options,
+                            index=week_options.index(current_week) if current_week in week_options else 0,
+                            key="home_week", label_visibility="collapsed")
     games = ctx.sched[ctx.sched.week == week].sort_values("gameday")
-    st.markdown(f"#### Jornada {week} · horarios en España")
     if games.empty:
         st.info("Todavía no hay partidos programados para esta temporada.")
     else:
@@ -82,19 +83,13 @@ def render(ctx):
         eff = team_efficiency_table(pbp).dropna(subset=["off_epa_play", "def_epa_play"])
         if len(eff) >= 2:
             pct = with_percentiles(eff)
-            best_gap = 0
-            for g in games.itertuples():
-                if g.home_team not in pct.team.values or g.away_team not in pct.team.values:
-                    continue
-                d = duelo_clave(pct, g.home_team, g.away_team)
-                if d and abs(d["gap"]) >= abs(best_gap):
-                    best_gap, duel_game = d["gap"], (g, d)
+            duel_game = featured_game(games, pct)
 
     if duel_game:
         g, d = duel_game
         st.markdown(f"""
           <div class="duel-card fade-up">
-            <div class="dc-tag">⚔️ PARTIDO DESTACADO · EL DUELO CLAVE</div>
+            <div class="dc-tag">⚔️ PARTIDO DESTACADO · JORNADA {week} · EL DUELO CLAVE</div>
             <div class="dc-title">{ctx.team_meta[g.away_team]['name']} @ {ctx.team_meta[g.home_team]['name']}</div>
             <div class="dc-detail">{d['label']}: EPA/jugada {d['off_epa']:+.3f} de ataque
             (percentil {d['off_pct']:.0f}) contra {d['def_epa']:+.3f} de EPA permitida en defensa

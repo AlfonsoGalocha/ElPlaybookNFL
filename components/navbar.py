@@ -40,7 +40,7 @@ def render(logo_b64):
     if "page" not in st.session_state:
         st.session_state.page = DEFAULT_PAGE
 
-    nav_l, nav_c, nav_r = st.columns([1.7, 6.3, 1.0], vertical_alignment="center")
+    nav_l, nav_c, nav_r = st.columns([2.1, 5.9, 1.0], vertical_alignment="center")
     with nav_l:
         st.markdown(
             f'<div class="nav-brand"><img src="data:image/png;base64,{logo_b64}"/>'

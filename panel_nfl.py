@@ -24,11 +24,15 @@ import streamlit as st
 from matplotlib.colors import to_hex
 
 import nfl_graficos as G
+from analytics.efficiency import team_efficiency_table
+from analytics.games import featured_game, highlight_week
+from analytics.matchups import with_percentiles
 from analytics.standings import standings_table, team_meta_table
 from components import footer, navbar
-from components.hero import hero_html
+from components.hero import brand_slide, duel_slide, hero_html, player_slide, top_teams_slide
+from components.leaderboard import leaderboard_data
 from components.styles import css_block
-from data.loaders import get_news, load_schedules, load_season, load_teams
+from data.loaders import get_news, load_pbp, load_schedules, load_season, load_teams
 
 LOGO_PATH = "logo.png"
 LOGO_B64 = base64.b64encode(open(LOGO_PATH, "rb").read()).decode()
@@ -50,7 +54,37 @@ weeks = sorted(pdf["week"].unique().tolist())
 all_names = sorted(pdf.player_display_name.dropna().unique().tolist())
 all_teams = sorted(team_meta.keys())
 
-st.markdown(hero_html(get_news()), unsafe_allow_html=True)
+feature_slides = [brand_slide(LOGO_B64, i=0)]
+
+top3 = standings.sort_values("PCT", ascending=False).head(3)
+if len(top3) >= 3:
+    top3_data = [(r.team, team_meta[r.team]["name"], team_meta[r.team]["logo"]) for r in top3.itertuples()]
+    feature_slides.append(top_teams_slide(top3_data, i=len(feature_slides)))
+
+pbp = load_pbp(season)
+if pbp is not None and not pbp.empty:
+    hero_week = highlight_week(sched)
+    week_games = sched[sched.week == hero_week]
+    eff = team_efficiency_table(pbp).dropna(subset=["off_epa_play", "def_epa_play"])
+    if len(eff) >= 2 and not week_games.empty:
+        pct = with_percentiles(eff)
+        fg = featured_game(week_games, pct)
+        if fg:
+            g, _d = fg
+            feature_slides.append(duel_slide(
+                hero_week,
+                {"abbr": g.away_team, "logo": team_meta[g.away_team]["logo"]},
+                {"abbr": g.home_team, "logo": team_meta[g.home_team]["logo"]},
+                i=len(feature_slides)))
+
+top_passers = leaderboard_data(pdf, colors, "passing_yards", None, 1)
+if top_passers:
+    p = top_passers[0]
+    feature_slides.append(player_slide(
+        p["name"], p["headshot"], "Yardas de pase esta temporada",
+        f"{p['value']:,.0f}".replace(",", "."), i=len(feature_slides)))
+
+st.markdown(hero_html(feature_slides, get_news()), unsafe_allow_html=True)
 
 ctx = SimpleNamespace(
     season=season, pdf=pdf, teams_df=teams_df, teams=teams, colors=colors,
