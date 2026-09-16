@@ -20,11 +20,12 @@ from matplotlib.patches import FancyBboxPatch, Circle, Ellipse
 # MARCA (una sola vez, compartida por todo)
 # ---------------------------------------------------------------------------
 CANAL  = "@elplaybooknfl"          # el @ de tu amigo
-BG     = "#0B0E14"
-CARD   = "#161B26"
-FG     = "#FFFFFF"
-MUTED  = "#8A93A6"
-ACCENT = "#00E5A0"
+BG      = "#0B0E14"
+CARD    = "#161B26"
+FG      = "#FFFFFF"
+MUTED   = "#8A93A6"
+ACCENT  = "#E4203C"   # rojo del logo
+ACCENT2 = "#1FA3E8"   # azul del logo
 
 STATS = {
     "passing_yards":   ("passing_yards",   "YARDAS DE PASE",        "yds", 0),
