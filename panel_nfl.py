@@ -14,6 +14,7 @@ import urllib.request
 import xml.etree.ElementTree as ET
 
 import numpy as np
+import pandas as pd
 import polars as pl
 import plotly.graph_objects as go
 import streamlit as st
@@ -22,7 +23,7 @@ from matplotlib.colors import to_hex
 
 import nfl_graficos as G
 
-BG, CARD, FG, MUTED, ACCENT = G.BG, G.CARD, G.FG, G.MUTED, G.ACCENT
+BG, CARD, FG, MUTED, ACCENT, ACCENT2 = G.BG, G.CARD, G.FG, G.MUTED, G.ACCENT, G.ACCENT2
 
 # --- CONTACTO DEL CANAL (cambia por tus enlaces reales) --------------------
 REDES = {
@@ -55,49 +56,73 @@ LOGO_B64 = base64.b64encode(open(LOGO_PATH, "rb").read()).decode()
 
 st.set_page_config(page_title="El Playbook NFL", page_icon=LOGO_PATH, layout="wide")
 
-st.markdown("""
+st.markdown(f"""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap');
-html, body, [class*="css"] { font-family:'Inter', sans-serif; }
-.stApp { background: radial-gradient(1100px 500px at 15% -10%, #14243f 0%, #0B0E14 55%); color:#E9EDF5; }
-#MainMenu, footer, header { visibility:hidden; }
-.block-container { padding-top:1.1rem; max-width:1320px; }
-h1,h2,h3 { font-family:'Oswald', sans-serif; letter-spacing:.5px; color:#fff; }
-.hero { display:flex; align-items:center; justify-content:space-between; padding-bottom:.6rem; margin-bottom:.3rem; border-bottom:1px solid rgba(255,255,255,.07); }
-.brand { font-family:'Oswald'; font-weight:700; font-size:2rem; letter-spacing:1px; color:#fff; display:flex; align-items:center; gap:.6rem; }
-.brand .nfl { background:linear-gradient(135deg,#00E5A0,#12B8FF); color:#0B0E14; padding:.02rem .5rem; border-radius:9px; }
-.brand .logo { height:46px; width:46px; border-radius:50%; object-fit:cover; box-shadow:0 0 0 2px rgba(255,255,255,.15); }
-.tagline { color:#8A93A6; font-size:.9rem; text-align:right; }
-.side-brand { display:flex; align-items:center; gap:10px; margin-bottom:.2rem; }
-.side-brand img { width:40px; height:40px; border-radius:50%; object-fit:cover; box-shadow:0 0 0 2px rgba(255,255,255,.15); }
-.side-brand span { font-family:'Oswald'; font-weight:700; font-size:1.05rem; letter-spacing:.5px; color:#fff; }
-.stTabs [data-baseweb="tab-list"] { gap:.2rem; border-bottom:1px solid rgba(255,255,255,.08); }
-.stTabs [data-baseweb="tab"] { font-family:'Oswald'; font-size:1.05rem; letter-spacing:.5px; }
-.stTabs [aria-selected="true"] { color:#00E5A0 !important; }
-section[data-testid="stSidebar"] { background:#0E1420; border-right:1px solid rgba(255,255,255,.06); }
-.lb-row { display:flex; align-items:center; gap:14px; background:#131A26; border:1px solid rgba(255,255,255,.05); border-radius:14px; padding:10px 16px; margin-bottom:10px; transition:transform .15s, border-color .15s; }
-.lb-row:hover { transform:translateX(4px); border-color:rgba(0,229,160,.45); }
-.lb-rank { font-family:'Oswald'; font-weight:700; font-size:1.45rem; width:36px; text-align:center; color:#8A93A6; }
-.rank-1 { color:#FFD54A; } .rank-2 { color:#C9D2DE; } .rank-3 { color:#E0925B; }
-.lb-photo { width:52px; height:52px; border-radius:50%; object-fit:cover; background:#222C3D; border:2px solid rgba(255,255,255,.15); }
-.lb-info { flex:1; min-width:0; }
-.lb-name { font-family:'Oswald'; font-weight:600; font-size:1.15rem; color:#fff; line-height:1.15; }
-.lb-meta { color:#8A93A6; font-size:.78rem; margin-bottom:6px; }
-.lb-track { height:8px; background:rgba(255,255,255,.06); border-radius:6px; overflow:hidden; }
-.lb-fill { height:100%; border-radius:6px; }
-.lb-value { font-family:'Oswald'; font-weight:700; font-size:1.5rem; color:#fff; text-align:right; white-space:nowrap; }
-.lb-value span { font-size:.72rem; color:#8A93A6; font-weight:500; margin-left:3px; }
-.news-h { font-family:'Oswald'; font-size:1.25rem; color:#fff; margin:.2rem 0 .7rem; border-left:3px solid #00E5A0; padding-left:.5rem; }
-.news-card { display:block; background:#131A26; border:1px solid rgba(255,255,255,.05); border-radius:12px; padding:12px 14px; margin-bottom:10px; text-decoration:none; }
-.news-card:hover { border-color:rgba(0,229,160,.45); }
-.news-title { color:#E9EDF5; font-size:.9rem; font-weight:600; line-height:1.3; }
-.news-src { color:#00E5A0; font-size:.7rem; text-transform:uppercase; letter-spacing:.5px; margin-top:5px; }
-.contact a { color:#C9D2DE !important; text-decoration:none; display:block; padding:4px 0; font-size:.92rem; }
-.contact a:hover { color:#00E5A0 !important; }
-.prof-hd { display:flex; align-items:center; gap:16px; margin:.4rem 0 1rem; }
-.prof-hd img { width:84px; height:84px; border-radius:50%; object-fit:cover; background:#222C3D; border:3px solid rgba(255,255,255,.15); }
-.prof-name { font-family:'Oswald'; font-size:2rem; color:#fff; line-height:1; }
-.prof-meta { color:#00E5A0; font-weight:600; font-size:.95rem; }
+html, body, [class*="css"] {{ font-family:'Inter', sans-serif; }}
+.stApp {{ background: radial-gradient(1200px 560px at 12% -12%, #2a1420 0%, #0B0E14 45%),
+                       radial-gradient(1000px 480px at 100% 0%, #0e2438 0%, #0B0E14 55%); color:#E9EDF5; }}
+#MainMenu, footer, header {{ visibility:hidden; }}
+.block-container {{ padding-top:1.1rem; max-width:1360px; }}
+h1,h2,h3 {{ font-family:'Oswald', sans-serif; letter-spacing:.5px; color:#fff; }}
+.hero {{ display:flex; align-items:center; justify-content:space-between; padding-bottom:.7rem; margin-bottom:.4rem; border-bottom:1px solid rgba(255,255,255,.08); }}
+.brand {{ font-family:'Oswald'; font-weight:700; font-size:2rem; letter-spacing:1px; color:#fff; display:flex; align-items:center; gap:.6rem; }}
+.brand .nfl {{ background:linear-gradient(135deg,{ACCENT},{ACCENT2}); color:#fff; padding:.02rem .5rem; border-radius:9px; }}
+.brand .logo {{ height:46px; width:46px; border-radius:50%; object-fit:cover; box-shadow:0 0 0 2px rgba(255,255,255,.18); }}
+.tagline {{ color:#8A93A6; font-size:.9rem; text-align:right; }}
+.side-brand {{ display:flex; align-items:center; gap:10px; margin-bottom:.2rem; }}
+.side-brand img {{ width:40px; height:40px; border-radius:50%; object-fit:cover; box-shadow:0 0 0 2px rgba(255,255,255,.18); }}
+.side-brand span {{ font-family:'Oswald'; font-weight:700; font-size:1.05rem; letter-spacing:.5px; color:#fff; }}
+.stTabs [data-baseweb="tab-list"] {{ gap:.2rem; border-bottom:1px solid rgba(255,255,255,.08); }}
+.stTabs [data-baseweb="tab"] {{ font-family:'Oswald'; font-size:1.05rem; letter-spacing:.5px; }}
+.stTabs [aria-selected="true"] {{ color:{ACCENT} !important; }}
+.stTabs [data-baseweb="tab-highlight"] {{ background-color:{ACCENT} !important; }}
+section[data-testid="stSidebar"] {{ background:#0E1420; border-right:1px solid rgba(255,255,255,.06); }}
+.lb-row {{ display:flex; align-items:center; gap:14px; background:#131A26; border:1px solid rgba(255,255,255,.05); border-radius:14px; padding:10px 16px; margin-bottom:10px; transition:transform .15s, border-color .15s; }}
+.lb-row:hover {{ transform:translateX(4px); border-color:rgba(228,32,60,.5); }}
+.lb-rank {{ font-family:'Oswald'; font-weight:700; font-size:1.45rem; width:36px; text-align:center; color:#8A93A6; }}
+.rank-1 {{ color:#FFD54A; }} .rank-2 {{ color:#C9D2DE; }} .rank-3 {{ color:#E0925B; }}
+.lb-photo {{ width:52px; height:52px; border-radius:50%; object-fit:cover; background:#222C3D; border:2px solid rgba(255,255,255,.15); }}
+.lb-info {{ flex:1; min-width:0; }}
+.lb-name {{ font-family:'Oswald'; font-weight:600; font-size:1.15rem; color:#fff; line-height:1.15; }}
+.lb-meta {{ color:#8A93A6; font-size:.78rem; margin-bottom:6px; }}
+.lb-track {{ height:8px; background:rgba(255,255,255,.06); border-radius:6px; overflow:hidden; }}
+.lb-fill {{ height:100%; border-radius:6px; }}
+.lb-value {{ font-family:'Oswald'; font-weight:700; font-size:1.5rem; color:#fff; text-align:right; white-space:nowrap; }}
+.lb-value span {{ font-size:.72rem; color:#8A93A6; font-weight:500; margin-left:3px; }}
+.news-h {{ font-family:'Oswald'; font-size:1.25rem; color:#fff; margin:.2rem 0 .7rem; border-left:3px solid {ACCENT}; padding-left:.5rem; }}
+.news-card {{ display:block; background:#131A26; border:1px solid rgba(255,255,255,.05); border-radius:12px; padding:12px 14px; margin-bottom:10px; text-decoration:none; }}
+.news-card:hover {{ border-color:rgba(228,32,60,.5); }}
+.news-title {{ color:#E9EDF5; font-size:.9rem; font-weight:600; line-height:1.3; }}
+.news-src {{ color:{ACCENT}; font-size:.7rem; text-transform:uppercase; letter-spacing:.5px; margin-top:5px; }}
+.contact a {{ color:#C9D2DE !important; text-decoration:none; display:block; padding:4px 0; font-size:.92rem; }}
+.contact a:hover {{ color:{ACCENT2} !important; }}
+.prof-hd {{ display:flex; align-items:center; gap:16px; margin:.4rem 0 1rem; }}
+.prof-hd img {{ width:84px; height:84px; border-radius:50%; object-fit:cover; background:#222C3D; border:3px solid rgba(255,255,255,.15); }}
+.prof-name {{ font-family:'Oswald'; font-size:2rem; color:#fff; line-height:1; }}
+.prof-meta {{ color:{ACCENT}; font-weight:600; font-size:.95rem; }}
+
+/* --- Equipos --- */
+.conf-h {{ font-family:'Oswald'; font-weight:700; font-size:1.05rem; letter-spacing:1px; color:{ACCENT2}; margin:1rem 0 .5rem; }}
+div[data-testid="stButton"] button {{ background:#131A26; border:1px solid rgba(255,255,255,.08); border-radius:12px; transition:border-color .15s, transform .15s; }}
+div[data-testid="stButton"] button:hover {{ border-color:{ACCENT}; transform:translateY(-2px); color:#fff; }}
+.team-hd {{ display:flex; align-items:center; gap:18px; margin:.4rem 0 1.1rem; padding:16px 20px; border-radius:16px; }}
+.team-hd img {{ width:76px; height:76px; object-fit:contain; }}
+.team-hd .tname {{ font-family:'Oswald'; font-size:2.1rem; color:#fff; line-height:1; }}
+.team-hd .tmeta {{ color:rgba(255,255,255,.85); font-weight:600; font-size:.95rem; margin-top:3px; }}
+
+/* --- Clasificacion --- */
+.div-h {{ font-family:'Oswald'; font-weight:700; font-size:.95rem; letter-spacing:1px; color:#8A93A6; text-transform:uppercase; margin:1.1rem 0 .5rem; padding-left:.2rem; border-left:3px solid {ACCENT2}; padding-left:.5rem; }}
+.std-row {{ display:flex; align-items:center; gap:12px; background:#131A26; border:1px solid rgba(255,255,255,.05); border-radius:10px; padding:8px 14px; margin-bottom:6px; }}
+.std-row:hover {{ border-color:rgba(31,163,232,.5); }}
+.std-rank {{ width:22px; color:#8A93A6; font-weight:700; font-family:'Oswald'; }}
+.std-logo {{ width:30px; height:30px; object-fit:contain; }}
+.std-team {{ flex:1; min-width:0; font-weight:600; color:#fff; }}
+.std-team small {{ color:#8A93A6; font-weight:500; }}
+.std-stat {{ width:56px; text-align:center; font-family:'Oswald'; font-weight:600; color:#E9EDF5; }}
+.std-head {{ display:flex; align-items:center; gap:12px; padding:0 14px; margin-bottom:4px; color:#8A93A6; font-size:.72rem; letter-spacing:.5px; text-transform:uppercase; }}
+.std-head .std-rank {{ width:22px; }} .std-head .std-logo {{ width:30px; }} .std-head .std-team {{ flex:1; }}
+.std-head .std-stat {{ width:56px; text-align:center; }}
 </style>
 """, unsafe_allow_html=True)
 
@@ -111,6 +136,36 @@ def load_season(season):
 @st.cache_resource
 def load_teams():
     return nfl.load_teams()
+
+
+@st.cache_data(show_spinner=False)
+def load_schedules(season):
+    df = nfl.load_schedules([season]).filter(pl.col("game_type") == "REG")
+    return df.to_pandas()
+
+
+def standings_table(sched, meta):
+    rows = {a: {"W": 0, "L": 0, "T": 0, "PF": 0, "PA": 0} for a in meta}
+    for g in sched.itertuples():
+        h, a = g.home_team, g.away_team
+        hs, as_ = g.home_score, g.away_score
+        if h not in rows or a not in rows or np.isnan(hs) or np.isnan(as_):
+            continue
+        rows[h]["PF"] += hs; rows[h]["PA"] += as_
+        rows[a]["PF"] += as_; rows[a]["PA"] += hs
+        if hs > as_:
+            rows[h]["W"] += 1; rows[a]["L"] += 1
+        elif hs < as_:
+            rows[a]["W"] += 1; rows[h]["L"] += 1
+        else:
+            rows[h]["T"] += 1; rows[a]["T"] += 1
+    out = []
+    for a, r in rows.items():
+        gp = r["W"] + r["L"] + r["T"]
+        pct = (r["W"] + 0.5 * r["T"]) / gp if gp else 0.0
+        out.append({"team": a, **r, "PCT": pct, "DIFF": int(r["PF"] - r["PA"]),
+                    "conf": meta[a]["conf"], "division": meta[a]["div"]})
+    return pd.DataFrame(out).sort_values("PCT", ascending=False).reset_index(drop=True)
 
 
 @st.cache_data(ttl=1800, show_spinner=False)
@@ -150,6 +205,28 @@ def player_season(pdf, name):
         "headshot": headshot_of(pdf, name),
         "tiles": G._tiles(pos, G.player_totals(p)),
     }
+
+
+def team_meta_table(teams_df, colors):
+    out = {}
+    for r in teams_df.iter_rows(named=True):
+        out[r["team_abbr"]] = {
+            "name": r["team_name"], "conf": r["team_conf"], "div": r["team_division"],
+            "logo": r["team_logo_espn"], "color": colors.get(r["team_abbr"], ACCENT),
+        }
+    return out
+
+
+def team_stat_tiles(std_row, s):
+    yards_total = s["passing_yards"] + s["rushing_yards"]
+    return [
+        ("RECORD", f"{int(std_row['W'])}-{int(std_row['L'])}-{int(std_row['T'])}"),
+        ("PTS A FAVOR", f"{std_row['PF']:,.0f}".replace(",", ".")),
+        ("PTS EN CONTRA", f"{std_row['PA']:,.0f}".replace(",", ".")),
+        ("YARDAS TOTALES", f"{yards_total:,.0f}".replace(",", ".")),
+        ("SACKS", f"{s['def_sacks']:.1f}"),
+        ("INTERCEP.", f"{s['def_interceptions']:,.0f}"),
+    ]
 
 
 def totals_table(pdf, week_range=None):
@@ -224,8 +301,13 @@ pdf = load_season(season)
 teams_df = load_teams()
 teams = G.team_info(teams_df)
 colors = {a: to_hex(c) for a, (c, _) in teams.items()}
+sched = load_schedules(season)
+season_teams = set(sched.home_team) | set(sched.away_team)
+team_meta = {a: m for a, m in team_meta_table(teams_df, colors).items() if a in season_teams}
+standings = standings_table(sched, team_meta)
 weeks = sorted(pdf["week"].unique().tolist())
 all_names = sorted(pdf.player_display_name.dropna().unique().tolist())
+all_teams = sorted(team_meta.keys())
 
 st.sidebar.markdown("---")
 st.sidebar.markdown("**📣 Sigue al canal**")
@@ -242,7 +324,8 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-tab1, tab2, tab3 = st.tabs(["🏆 Rankings", "📊 Comparar", "👤 Jugadores"])
+tab1, tab_std, tab_teams, tab2, tab3 = st.tabs(
+    ["🏆 Rankings", "📋 Clasificación", "🏟️ Equipos", "📊 Comparar", "👤 Jugadores"])
 
 # ---------------------------------------------------------------------------
 # TAB 1 — Rankings + Noticias
@@ -273,6 +356,107 @@ with tab1:
     with side:
         st.markdown('<div class="news-h">📰 Últimas noticias</div>', unsafe_allow_html=True)
         st.markdown(news_html(get_news(NEWS_FEED)), unsafe_allow_html=True)
+
+# ---------------------------------------------------------------------------
+# TAB — Clasificación (general y por conferencia/división)
+# ---------------------------------------------------------------------------
+with tab_std:
+    st.markdown("<h2>Clasificación</h2>", unsafe_allow_html=True)
+    vista = st.radio("Vista", ["General", "Por conferencia"], horizontal=True, key="std_scope")
+
+    def _std_block(df, stats):
+        labels = {"PJ": "PJ", "V": "V", "D": "D", "E": "E", "PCT": "%",
+                  "PF": "PF", "PC": "PC", "DIF": "DIF"}
+        head_stats = "".join(f'<div class="std-stat">{labels[s]}</div>' for s in stats)
+        st.markdown(f'<div class="std-head"><div class="std-rank">#</div><div class="std-logo"></div>'
+                    f'<div class="std-team">Equipo</div>{head_stats}</div>', unsafe_allow_html=True)
+        rows = []
+        for i, r in enumerate(df.itertuples(), 1):
+            meta = team_meta[r.team]
+            gp = r.W + r.L + r.T
+            vals = {"PJ": gp, "V": r.W, "D": r.L, "E": r.T, "PCT": f"{r.PCT:.3f}",
+                    "PF": f"{r.PF:.0f}", "PC": f"{r.PA:.0f}", "DIF": f"{r.DIFF:+d}"}
+            stat_html = "".join(f'<div class="std-stat">{vals[s]}</div>' for s in stats)
+            rows.append(
+                f'<div class="std-row"><div class="std-rank">{i}</div>'
+                f'<img class="std-logo" src="{meta["logo"]}"/>'
+                f'<div class="std-team">{meta["name"]} <small>{r.team}</small></div>{stat_html}</div>'
+            )
+        st.markdown("".join(rows), unsafe_allow_html=True)
+
+    if vista == "General":
+        _std_block(standings, ["PJ", "V", "D", "E", "PCT", "PF", "PC", "DIF"])
+    else:
+        for conf in ["AFC", "NFC"]:
+            st.markdown(f'<div class="conf-h">{conf}</div>', unsafe_allow_html=True)
+            cdf = standings[standings.conf == conf]
+            divs = sorted(cdf["division"].unique())
+            dcols = st.columns(2)
+            for i, div in enumerate(divs):
+                with dcols[i % 2]:
+                    st.markdown(f'<div class="div-h">{div}</div>', unsafe_allow_html=True)
+                    ddf = cdf[cdf["division"] == div].sort_values("PCT", ascending=False)
+                    _std_block(ddf, ["V", "D", "E", "DIF"])
+    st.caption("PJ partidos jugados · % porcentaje de victorias · PF/PC puntos a favor/en contra · DIF diferencia de puntos.")
+
+# ---------------------------------------------------------------------------
+# TAB — Equipos (picker + stats del equipo + plantilla)
+# ---------------------------------------------------------------------------
+with tab_teams:
+    if ("sel_team" not in st.session_state
+            or st.session_state.sel_team not in all_teams):
+        st.session_state.sel_team = "BUF" if "BUF" in all_teams else all_teams[0]
+
+    def _pick_team(abbr):
+        st.session_state.sel_team = abbr
+
+    st.markdown("<h2>Equipos</h2>", unsafe_allow_html=True)
+    for conf in ["AFC", "NFC"]:
+        st.markdown(f'<div class="conf-h">{conf}</div>', unsafe_allow_html=True)
+        conf_teams = sorted(a for a in all_teams if team_meta[a]["conf"] == conf)
+        cols = st.columns(8)
+        for i, abbr in enumerate(conf_teams):
+            with cols[i % 8]:
+                meta = team_meta[abbr]
+                st.markdown(f"<div style='text-align:center'><img src='{meta['logo']}' "
+                            f"style='width:44px;height:44px;object-fit:contain'></div>",
+                            unsafe_allow_html=True)
+                st.button(abbr, key=f"team_{abbr}", on_click=_pick_team, args=(abbr,),
+                          use_container_width=True)
+
+    st.markdown("---")
+    team = st.session_state.sel_team
+    meta = team_meta[team]
+    std_rows = standings[standings.team == team]
+    st.markdown(f"""
+      <div class="team-hd" style="background:linear-gradient(120deg,{meta['color']}33,transparent)">
+        <img src="{meta['logo']}"/>
+        <div><div class="tname">{meta['name'].upper()}</div>
+        <div class="tmeta">{meta['conf']} · {meta['div']} · Temporada {season}</div></div>
+      </div>""", unsafe_allow_html=True)
+
+    if len(std_rows):
+        s = G.player_totals(pdf[pdf.team == team])
+        tiles = team_stat_tiles(std_rows.iloc[0], s)
+        m = st.columns(len(tiles))
+        for col, (label, value) in zip(m, tiles):
+            col.metric(label, value)
+
+    st.markdown("#### Plantilla")
+    roster = totals_table(pdf[pdf.team == team])
+    if roster.empty:
+        st.info("No hay jugadores con estadisticas para este equipo en esta temporada.")
+    else:
+        roster["yds_total"] = roster.passing_yards + roster.rushing_yards + roster.receiving_yards
+        roster["td_total"] = roster.passing_tds + roster.rushing_tds + roster.receiving_tds
+        roster = roster.sort_values(["yds_total", "td_total"], ascending=False)
+        show_r = {"player_display_name": "Jugador", "position": "Pos",
+                  "passing_yards": "Yds pase", "passing_tds": "TD pase",
+                  "rushing_yards": "Yds tierra", "rushing_tds": "TD tierra",
+                  "receptions": "Recep.", "receiving_yards": "Yds recep.",
+                  "receiving_tds": "TD recep.", "td_total": "TD tot."}
+        st.dataframe(roster[list(show_r)].rename(columns=show_r).set_index("Jugador"),
+                     use_container_width=True, height=420)
 
 # ---------------------------------------------------------------------------
 # TAB 2 — Comparador
