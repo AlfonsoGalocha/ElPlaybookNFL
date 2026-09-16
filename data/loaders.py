@@ -18,13 +18,15 @@ import streamlit as st
 PBP_COLS = [
     "game_id", "season", "week", "season_type", "posteam", "defteam",
     "play_id", "down", "ydstogo", "yardline_100", "play_type",
-    "pass_attempt", "rush_attempt", "pass", "rush", "sack", "qb_hit",
+    "pass_attempt", "rush_attempt", "pass", "rush", "sack", "qb_hit", "yards_gained",
     "touchdown", "interception", "fumble_lost",
     "third_down_converted", "third_down_failed",
     "fourth_down_converted", "fourth_down_failed",
     "epa", "success", "air_yards", "yards_after_catch", "cpoe", "cp",
     "wpa", "shotgun", "no_huddle", "qb_dropback",
     "passer_player_name", "rusher_player_name", "receiver_player_name",
+    "passer_player_id", "rusher_player_id", "receiver_player_id",
+    "home_team", "away_team", "home_score", "away_score", "qtr",
 ]
 
 

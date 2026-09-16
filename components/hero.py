@@ -1,5 +1,9 @@
 """components/hero.py — carrusel superior (masthead): marca, líderes, duelo de la semana, jugador
 destacado y noticias, más la tarjeta de noticias de un equipo.
+
+Los slides que representan equipos/jugadores usan un layout de dos columnas
+(texto a la izquierda, imagen grande a la derecha, ~35-38% del ancho) para
+que el logo/foto sea protagonista sin deformarse (siempre object-fit:contain).
 """
 
 import nfl_graficos as G
@@ -22,48 +26,56 @@ FALLBACK_NEWS = [
 ]
 
 
-def _slide(i, body_html, tag="", cta="", href="#"):
+def _slide(i, text_html, tag="", cta="", href="#", visual_html=None):
     tag_html = f'<div class="hc-tag">{tag}</div>' if tag else ""
     cta_html = f'<div class="hc-cta">{cta}</div>' if cta else ""
+    text_block = f'<div class="hc-text">{tag_html}{text_html}{cta_html}</div>'
+    visual_block = f'<div class="hc-visual">{visual_html}</div>' if visual_html else ""
+    slide_cls = "hc-slide hc-slide-visual" if visual_html else "hc-slide"
     return (
-        f'<a class="hc-slide" href="{href}" target="_blank" rel="noopener" '
+        f'<a class="{slide_cls}" href="{href}" target="_blank" rel="noopener" '
         f'style="animation-delay:-{i * 5}s; background:{HERO_GRADIENTS[i % len(HERO_GRADIENTS)]}">'
-        f'{tag_html}{body_html}{cta_html}</a>'
+        f'{text_block}{visual_block}</a>'
     )
 
 
 def brand_slide(logo_b64, i=0):
-    body = (f'<div class="hc-brand-row"><img class="hc-logo" src="data:image/png;base64,{logo_b64}"/>'
-            f'<div class="hc-title">EL PLAYBOOK NFL</div></div>')
-    return _slide(i, body, tag="🏈 BIENVENIDO", cta="Entiende la NFL. No solo la sigas.")
+    text = '<div class="hc-title">EL PLAYBOOK NFL</div>'
+    visual = f'<img class="hc-visual-logo" src="data:image/png;base64,{logo_b64}"/>'
+    return _slide(i, text, tag="🏈 BIENVENIDO", cta="Entiende la NFL. No solo la sigas.", visual_html=visual)
 
 
 def top_teams_slide(top3, i=1):
     """top3: lista de (abbr, name, logo_url), ya ordenada por clasificación."""
-    row = "".join(f'<div class="hc-team"><img src="{logo}"/><div>{abbr}</div></div>'
-                  for abbr, _name, logo in top3)
-    body = f'<div class="hc-teams-row">{row}</div><div class="hc-title" style="font-size:1.6rem">Líderes de la temporada</div>'
-    return _slide(i, body, tag="🏆 CLASIFICACIÓN", cta="Ver clasificación completa →")
+    text = '<div class="hc-title" style="font-size:1.7rem">Líderes de la temporada</div>'
+    logos = "".join(f'<img class="hc-visual-mini-logo" src="{logo}" title="{abbr}"/>'
+                    for abbr, _name, logo in top3)
+    visual = f'<div class="hc-visual-team-row">{logos}</div>'
+    return _slide(i, text, tag="🏆 CLASIFICACIÓN", cta="Ver clasificación completa →", visual_html=visual)
 
 
 def duel_slide(week, away, home, i=2):
     """away/home: dict con 'abbr' y 'logo'."""
-    body = (f'<div class="hc-vs-row"><img class="hc-vs-logo" src="{away["logo"]}"/>'
-            f'<div class="hc-vs-text">VS</div><img class="hc-vs-logo" src="{home["logo"]}"/></div>'
-            f'<div class="hc-title" style="font-size:1.5rem">{away["abbr"]} @ {home["abbr"]}</div>')
-    return _slide(i, body, tag=f"⚔️ SEMANA {week} · DUELO CLAVE", cta="Ver el matchup completo →")
+    text = f'<div class="hc-title">{away["abbr"]} @ {home["abbr"]}</div>'
+    visual = (f'<div class="hc-visual-vs-row">'
+              f'<img class="hc-visual-duel-logo" src="{away["logo"]}" title="{away["abbr"]}"/>'
+              f'<span class="hc-visual-vs-text">VS</span>'
+              f'<img class="hc-visual-duel-logo" src="{home["logo"]}" title="{home["abbr"]}"/>'
+              f'</div>')
+    return _slide(i, text, tag=f"⚔️ SEMANA {week} · DUELO CLAVE", cta="Ver el matchup completo →",
+                  visual_html=visual)
 
 
 def player_slide(name, headshot, stat_label, stat_value, i=3):
-    body = (f'<div class="hc-player-row"><img class="hc-player-photo" src="{headshot}"/>'
-            f'<div><div class="hc-title" style="font-size:1.6rem">{name}</div>'
-            f'<div class="hc-cta" style="margin-top:2px">{stat_label}: {stat_value}</div></div></div>')
-    return _slide(i, body, tag="🔥 DESTACADO DE LA TEMPORADA")
+    text = (f'<div class="hc-title" style="font-size:1.6rem">{name}</div>'
+            f'<div class="hc-cta" style="margin-top:2px">{stat_label}: {stat_value}</div>')
+    visual = f'<img class="hc-visual-photo" src="{headshot}"/>' if headshot else ""
+    return _slide(i, text, tag="🔥 DESTACADO DE LA TEMPORADA", visual_html=visual)
 
 
 def news_slide(title, link, i):
-    body = f'<div class="hc-title">{title}</div>'
-    return _slide(i, body, tag="🏈 NFL · ÚLTIMA HORA", cta="Leer más →", href=link)
+    text = f'<div class="hc-title">{title}</div>'
+    return _slide(i, text, tag="🏈 NFL · ÚLTIMA HORA", cta="Leer más →", href=link)
 
 
 def hero_html(feature_slides, news_items=None):

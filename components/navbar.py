@@ -14,6 +14,7 @@ PAGES_SECONDARY = [
     ("laboratorio", "🔬 Laboratorio"),
     ("tendencias", "📈 Tendencias"),
     ("matchups", "⚔️ Matchups"),
+    ("partido", "🏈 Partido"),
     ("comparar", "📊 Comparar"),
     ("football_iq", "🎓 Football IQ"),
     ("quiz", "🧠 Quiz"),

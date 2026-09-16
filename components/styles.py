@@ -39,7 +39,7 @@ h1,h2,h3 {{ font-family:'Oswald', sans-serif; letter-spacing:.5px; color:#fff; }
 }}
 
 /* --- Hero carousel --- */
-.hero-carousel {{ position:relative; height:230px; border-radius:20px; overflow:hidden; margin:.2rem 0 1.4rem;
+.hero-carousel {{ position:relative; height:260px; border-radius:20px; overflow:hidden; margin:.2rem 0 1.4rem;
     border:1px solid rgba(255,255,255,.08); }}
 .hc-slide {{ position:absolute; inset:0; display:flex; flex-direction:column; justify-content:flex-end;
     padding:22px 28px; text-decoration:none; opacity:0; animation:hcFade 25s infinite ease-in-out; }}
@@ -50,20 +50,30 @@ h1,h2,h3 {{ font-family:'Oswald', sans-serif; letter-spacing:.5px; color:#fff; }
 .hc-title {{ font-family:'Bebas Neue'; font-size:2.1rem; line-height:1.05; color:#fff; max-width:78%;
     text-shadow:0 2px 12px rgba(0,0,0,.5); }}
 .hc-cta {{ color:#fff; opacity:.85; font-size:.82rem; font-weight:600; margin-top:8px; }}
-.hc-dots {{ position:absolute; bottom:14px; right:20px; display:flex; gap:6px; }}
+.hc-dots {{ position:absolute; bottom:14px; right:20px; display:flex; gap:6px; z-index:2; }}
 .hc-dot {{ width:22px; height:4px; border-radius:3px; background:rgba(255,255,255,.25); animation:hcDot 25s infinite; }}
 @keyframes hcDot {{ 0%{{background:#fff}} 16%{{background:#fff}} 20%{{background:rgba(255,255,255,.25)}} 100%{{background:rgba(255,255,255,.25)}} }}
-.hc-brand-row {{ display:flex; align-items:center; gap:16px; margin-bottom:2px; }}
-.hc-logo {{ height:64px; width:64px; min-width:64px; border-radius:50%; object-fit:cover; box-shadow:0 0 0 3px rgba(255,255,255,.28); }}
-.hc-teams-row {{ display:flex; gap:14px; margin-bottom:10px; }}
-.hc-team {{ display:flex; flex-direction:column; align-items:center; gap:4px; }}
-.hc-team img {{ height:52px; width:52px; object-fit:contain; background:rgba(255,255,255,.10); border-radius:50%; padding:6px; }}
-.hc-team div {{ font-family:'Oswald'; font-weight:700; color:#fff; font-size:.82rem; }}
-.hc-vs-row {{ display:flex; align-items:center; gap:18px; margin-bottom:10px; }}
-.hc-vs-logo {{ height:58px; width:58px; object-fit:contain; background:rgba(255,255,255,.10); border-radius:50%; padding:8px; }}
-.hc-vs-text {{ font-family:'Bebas Neue'; font-size:1.6rem; color:#fff; opacity:.85; }}
-.hc-player-row {{ display:flex; align-items:center; gap:16px; }}
-.hc-player-photo {{ height:78px; width:78px; min-width:78px; border-radius:50%; object-fit:cover; border:3px solid rgba(255,255,255,.3); background:#222; }}
+
+/* Slides con imagen protagonista (equipo/jugador): texto a la izq., visual grande a la der. */
+.hc-slide-visual {{ flex-direction:row; align-items:center; justify-content:space-between; gap:18px; }}
+.hc-text {{ flex:1 1 auto; min-width:0; display:flex; flex-direction:column; justify-content:center; }}
+.hc-text .hc-title {{ max-width:100%; }}
+.hc-visual {{ flex:0 0 38%; max-width:38%; height:82%; display:flex; align-items:center; justify-content:center; }}
+.hc-visual-logo {{ max-height:100%; max-width:100%; object-fit:contain; filter:drop-shadow(0 8px 20px rgba(0,0,0,.4)); }}
+.hc-visual-photo {{ height:100%; max-height:180px; width:auto; aspect-ratio:1/1; object-fit:cover; border-radius:50%;
+    border:4px solid rgba(255,255,255,.3); background:#222; }}
+.hc-visual-team-row {{ display:flex; align-items:center; justify-content:center; gap:10px; width:100%; height:100%; }}
+.hc-visual-mini-logo {{ max-height:78%; max-width:30%; object-fit:contain; filter:drop-shadow(0 4px 10px rgba(0,0,0,.4)); }}
+.hc-visual-vs-row {{ display:flex; align-items:center; justify-content:center; gap:16px; width:100%; height:100%; }}
+.hc-visual-duel-logo {{ max-height:100%; max-width:42%; object-fit:contain; filter:drop-shadow(0 6px 16px rgba(0,0,0,.4)); }}
+.hc-visual-vs-text {{ font-family:'Bebas Neue'; font-size:1.9rem; color:#fff; opacity:.85; flex:0 0 auto; }}
+@media (max-width:900px) {{
+  .hero-carousel {{ height:320px; }}
+  .hc-slide-visual {{ flex-direction:column-reverse; justify-content:center; text-align:center; padding:16px 20px; }}
+  .hc-text {{ align-items:center; }}
+  .hc-visual {{ flex:0 0 44%; max-width:100%; width:100%; height:44%; margin-bottom:8px; }}
+  .hc-title {{ max-width:100%; }}
+}}
 
 /* --- Titulos de seccion --- */
 .sect-title {{ font-family:'Bebas Neue'; font-size:2.1rem; letter-spacing:1px; color:#fff; margin:.1rem 0 .2rem;
@@ -158,6 +168,18 @@ div[class*="st-key-roster_"] button:hover {{
 .term-card .tc-example {{ color:#8A93A6; font-size:.84rem; margin-top:6px; font-style:italic; }}
 .quiz-card {{ background:#1B2230; border:1px solid rgba(255,255,255,.08); border-radius:16px; padding:20px 24px; margin-bottom:1rem; }}
 .quiz-score {{ font-family:'Bebas Neue'; font-size:3rem; color:{ACCENT}; text-align:center; }}
+
+/* --- Contexto de estadisticas (DATOS -> CONTEXTO) --- */
+.stat-context-card {{ background:#1B2230; border:1px solid rgba(255,255,255,.07); border-radius:14px;
+    padding:14px 16px; height:100%; }}
+.sxc-label {{ color:#8A93A6; font-size:.72rem; letter-spacing:.5px; text-transform:uppercase; font-weight:600; }}
+.sxc-value {{ font-family:'Oswald'; font-weight:700; font-size:1.7rem; color:#fff; margin:2px 0 8px; }}
+.sxc-unit {{ font-size:.85rem; color:#8A93A6; font-weight:600; }}
+.sxc-row {{ display:flex; gap:18px; padding-top:8px; border-top:1px solid rgba(255,255,255,.06); }}
+.sxc-mini-label {{ color:#5C6579; font-size:.62rem; letter-spacing:.4px; text-transform:uppercase; font-weight:700; }}
+.sxc-mini-value {{ font-family:'Oswald'; font-weight:700; font-size:1.05rem; color:#C9D2DE; margin-top:2px; }}
+.sxc-insight {{ color:#C9D2DE; font-size:.82rem; margin-top:10px; line-height:1.35; }}
+.sxc-pop {{ color:#5C6579; font-size:.7rem; margin-top:6px; }}
 
 /* --- Footer --- */
 .site-footer {{ margin-top:3rem; padding:2rem 0 1.4rem; border-top:1px solid rgba(255,255,255,.08); text-align:center; }}
