@@ -4,6 +4,7 @@ import streamlit as st
 
 PAGES_PRIMARY = [
     ("home", "🏠 Inicio"),
+    ("weekly", "📰 Weekly"),
     ("equipos", "🏟️ Equipos"),
     ("clasificacion", "📋 Clasificación"),
     ("rankings", "🏆 Rankings"),
@@ -14,6 +15,7 @@ PAGES_SECONDARY = [
     ("laboratorio", "🔬 Laboratorio"),
     ("tendencias", "📈 Tendencias"),
     ("matchups", "⚔️ Matchups"),
+    ("partido", "🏈 Partido"),
     ("comparar", "📊 Comparar"),
     ("football_iq", "🎓 Football IQ"),
     ("quiz", "🧠 Quiz"),

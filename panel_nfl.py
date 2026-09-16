@@ -25,7 +25,7 @@ from matplotlib.colors import to_hex
 
 import nfl_graficos as G
 from analytics.efficiency import team_efficiency_table
-from analytics.games import featured_game, highlight_week
+from analytics.games import completed_week, featured_game, highlight_week
 from analytics.matchups import with_percentiles
 from analytics.standings import standings_table, team_meta_table
 from components import footer, navbar
@@ -54,6 +54,8 @@ weeks = sorted(pdf["week"].unique().tolist())
 all_names = sorted(pdf.player_display_name.dropna().unique().tolist())
 all_teams = sorted(team_meta.keys())
 
+page = st.session_state.get("page", navbar.DEFAULT_PAGE)
+
 feature_slides = [brand_slide(LOGO_B64, i=0)]
 
 top3 = standings.sort_values("PCT", ascending=False).head(3)
@@ -61,13 +63,24 @@ if len(top3) >= 3:
     top3_data = [(r.team, team_meta[r.team]["name"], team_meta[r.team]["logo"]) for r in top3.itertuples()]
     feature_slides.append(top_teams_slide(top3_data, i=len(feature_slides)))
 
+weekly_week, weekly_duel = None, None
 pbp = load_pbp(season)
 if pbp is not None and not pbp.empty:
-    hero_week = highlight_week(sched)
-    week_games = sched[sched.week == hero_week]
     eff = team_efficiency_table(pbp).dropna(subset=["off_epa_play", "def_epa_play"])
-    if len(eff) >= 2 and not week_games.empty:
-        pct = with_percentiles(eff)
+    pct = with_percentiles(eff) if len(eff) >= 2 else None
+
+    # En "El Playbook Weekly" el duelo del hero es el de la jornada que se esta
+    # repasando (la ultima jugada), no el de la proxima jornada como en el resto de la app.
+    if page == "weekly":
+        weekly_week = completed_week(sched)
+        if weekly_week is not None and pct is not None:
+            fg = featured_game(sched[sched.week == weekly_week], pct)
+            if fg:
+                _g, weekly_duel = fg
+
+    hero_week = weekly_week if page == "weekly" else highlight_week(sched)
+    week_games = sched[sched.week == hero_week] if hero_week is not None else sched.iloc[0:0]
+    if pct is not None and not week_games.empty:
         fg = featured_game(week_games, pct)
         if fg:
             g, _d = fg
@@ -90,6 +103,7 @@ ctx = SimpleNamespace(
     season=season, pdf=pdf, teams_df=teams_df, teams=teams, colors=colors,
     sched=sched, team_meta=team_meta, standings=standings, weeks=weeks,
     all_names=all_names, all_teams=all_teams, logo_b64=LOGO_B64,
+    weekly_week=weekly_week, weekly_duel=weekly_duel,
 )
 
 PAGE_MODULES = {}
@@ -102,7 +116,6 @@ def _page(key):
     return PAGE_MODULES[key]
 
 
-page = st.session_state.get("page", navbar.DEFAULT_PAGE)
 try:
     _page(page).render(ctx)
 except ModuleNotFoundError:

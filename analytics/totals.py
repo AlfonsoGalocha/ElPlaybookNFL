@@ -64,6 +64,15 @@ def metrics_for_position(pos):
     return {"TD totales": "total_tds"}
 
 
+def headline_stat(pos):
+    """La primera metrica (mas representativa) de metrics_for_position, para usar como
+    "numero de cabecera" en contexto/evolucion. Devuelve (etiqueta, columna) o None."""
+    m = metrics_for_position(pos)
+    if not m:
+        return None
+    return next(iter(m.items()))
+
+
 def team_stat_tiles(std_row, s):
     yards_total = s["passing_yards"] + s["rushing_yards"]
     return [
@@ -74,6 +83,21 @@ def team_stat_tiles(std_row, s):
         ("SACKS", f"{s['def_sacks']:.1f}"),
         ("INTERCEP.", f"{s['def_interceptions']:,.0f}"),
     ]
+
+
+def top_performers(pdf, week, teams=None, n=4):
+    """Jugadores con mas produccion en una jornada (TDs*6 + yardas totales), opcionalmente
+    limitado a un conjunto de equipos. Criterio de anotacion/produccion real, no un ranking
+    de una sola columna arbitraria."""
+    pool = pdf[pdf.week == week]
+    if teams is not None:
+        pool = pool[pool.team.isin(teams)]
+    pool = pool.copy()
+    tds = pool.passing_tds.fillna(0) + pool.rushing_tds.fillna(0) + pool.receiving_tds.fillna(0)
+    yards = pool.passing_yards.fillna(0) + pool.rushing_yards.fillna(0) + pool.receiving_yards.fillna(0)
+    pool["_score"] = tds * 6 + yards
+    pool = pool[pool["_score"] > 0].sort_values("_score", ascending=False)
+    return pool.head(n) if n else pool
 
 
 def player_season(pdf, name):

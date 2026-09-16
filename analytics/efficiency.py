@@ -88,6 +88,75 @@ def ngs_passing_summary(ngs_pass, week_range=None):
     return g.sort_values("completion_pct_above_expectation", ascending=False)
 
 
+PLAYER_ROLE_COL = {
+    "QB": "passer_player_id",
+    "RB": "rusher_player_id", "FB": "rusher_player_id",
+    "WR": "receiver_player_id", "TE": "receiver_player_id",
+}
+
+
+def player_weekly_epa(pbp, player_id, position):
+    """EPA/jugada semanal de un jugador concreto, en su rol principal segun posicion
+    (pase para QB, carrera para RB/FB, recepcion para WR/TE).
+
+    Se une por player_id (GSIS id), no por nombre, para evitar confundir a dos
+    jugadores con el mismo nombre abreviado en pbp (p.ej. "J.Allen").
+    Devuelve None si la posicion no tiene un rol de pbp claro o no hay jugadas.
+    """
+    col_id = PLAYER_ROLE_COL.get((position or "").upper())
+    if col_id is None or col_id not in pbp.columns:
+        return None
+    d = pbp[(pbp[col_id] == player_id) & pbp.epa.notna()]
+    if d.empty:
+        return None
+    return (d.groupby("week")
+            .agg(epa_play=("epa", "mean"), success_rate=("success", "mean"), plays=("epa", "size"))
+            .reset_index().sort_values("week"))
+
+
+def league_epa_by_position(pbp, position, min_plays=10):
+    """EPA/jugada por jugador (player_id) de una posicion, para usar como poblacion de contexto."""
+    col_id = PLAYER_ROLE_COL.get((position or "").upper())
+    if col_id is None or col_id not in pbp.columns:
+        return None
+    d = pbp[pbp[col_id].notna() & pbp.epa.notna()]
+    if d.empty:
+        return None
+    g = (d.groupby(col_id).agg(epa_play=("epa", "mean"), plays=("epa", "size")).reset_index()
+         .rename(columns={col_id: "player_id"}))
+    return g[g.plays >= min_plays]
+
+
+def player_season_epa(weekly_epa):
+    """EPA/jugada de temporada (media ponderada por jugadas), a partir de player_weekly_epa()."""
+    if weekly_epa is None or weekly_epa.empty:
+        return None
+    total_plays = weekly_epa.plays.sum()
+    if total_plays == 0:
+        return None
+    return float((weekly_epa.epa_play * weekly_epa.plays).sum() / total_plays)
+
+
+def player_recent_vs_season(weekly_epa, recent_n=4):
+    """Compara el EPA/jugada de las ultimas `recent_n` semanas con el de toda la temporada.
+
+    Devuelve None si no hay al menos 2 semanas distintas con jugadas (no tendria sentido
+    comparar "recientes" con "temporada" si son la misma semana).
+    """
+    if weekly_epa is None or weekly_epa.empty or weekly_epa.week.nunique() < 2:
+        return None
+    season_epa = player_season_epa(weekly_epa)
+    if season_epa is None:
+        return None
+    recent = weekly_epa.sort_values("week").tail(recent_n)
+    recent_plays = recent.plays.sum()
+    if recent_plays == 0:
+        return None
+    recent_epa = float((recent.epa_play * recent.plays).sum() / recent_plays)
+    return {"season_epa": season_epa, "recent_epa": recent_epa, "delta": recent_epa - season_epa,
+            "recent_weeks": recent.week.tolist()}
+
+
 def pressure_table(pfr_pass):
     """Presion sufrida por QB (Pro Football Reference), agregada de temporada."""
     if pfr_pass is None or pfr_pass.empty:
