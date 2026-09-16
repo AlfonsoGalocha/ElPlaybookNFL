@@ -14,6 +14,7 @@ Lanzar:  streamlit run panel_nfl.py
 
 import base64
 import urllib.request
+from collections import Counter
 import xml.etree.ElementTree as ET
 
 import numpy as np
@@ -42,17 +43,6 @@ FAMOSOS = ["Patrick Mahomes", "Josh Allen", "Lamar Jackson", "Jalen Hurts",
            "Christian McCaffrey", "Saquon Barkley", "Travis Kelce"]
 
 NEWS_FEED = "https://www.espn.com/espn/rss/nfl/news"
-
-METRICS = {
-    "Yardas de pase": "passing_yards", "TD de pase": "passing_tds",
-    "Intercepciones": "passing_interceptions", "Yardas por tierra": "rushing_yards",
-    "TD por tierra": "rushing_tds", "Recepciones": "receptions",
-    "Yardas de recepcion": "receiving_yards", "TD de recepcion": "receiving_tds",
-    "TD totales": "total_tds",
-}
-RADAR_AXES = {"Pase (yds)": "passing_yards", "Carrera (yds)": "rushing_yards",
-              "Recepcion (yds)": "receiving_yards", "TD totales": "total_tds",
-              "1os downs": "first_downs_total"}
 
 PAGES = [
     ("equipos", "🏟️ Equipos"),
@@ -90,7 +80,7 @@ html, body, [class*="css"] {{ font-family:'Inter', sans-serif; }}
 .stApp {{ background: radial-gradient(1200px 560px at 12% -12%, #2a1420 0%, #0B0E14 45%),
                        radial-gradient(1000px 480px at 100% 0%, #0e2438 0%, #0B0E14 55%); color:#E9EDF5; }}
 #MainMenu, footer, header {{ visibility:hidden; }}
-.block-container {{ padding-top:1rem; padding-bottom:0; max-width:1360px; }}
+.block-container {{ padding-top:1rem; padding-bottom:0; padding-left:2.2rem; padding-right:2.2rem; max-width:1680px; }}
 h1,h2,h3 {{ font-family:'Oswald', sans-serif; letter-spacing:.5px; color:#fff; }}
 
 @keyframes fadeUp {{ from {{ opacity:0; transform:translateY(14px); }} to {{ opacity:1; transform:translateY(0); }} }}
@@ -104,13 +94,13 @@ h1,h2,h3 {{ font-family:'Oswald', sans-serif; letter-spacing:.5px; color:#fff; }
 .nav-brand {{ font-family:'Oswald'; font-weight:700; font-size:1.22rem; letter-spacing:.5px; color:#fff; display:flex; align-items:center; gap:.4rem; white-space:nowrap; overflow:hidden; }}
 .nav-brand img {{ height:32px; width:32px; min-width:32px; border-radius:50%; object-fit:cover; box-shadow:0 0 0 2px rgba(255,255,255,.18); }}
 .nav-brand .nfl {{ background:linear-gradient(135deg,{ACCENT},{ACCENT2}); color:#fff; padding:.02rem .4rem; border-radius:6px; font-size:.95rem; }}
-div[data-testid="stHorizontalBlock"] div[data-testid="stButton"] button {{
+:where(div[data-testid="stHorizontalBlock"] div[data-testid="stButton"] button) {{
     border-radius:999px !important; font-family:'Oswald'; font-size:.8rem; letter-spacing:.2px;
     padding:.4rem .5rem !important; white-space:nowrap; border:1px solid rgba(255,255,255,.10) !important;
     background:rgba(255,255,255,.03) !important; color:#C9D2DE !important; transition:all .18s ease;
 }}
-div[data-testid="stButton"] button:hover {{ border-color:{ACCENT} !important; color:#fff !important; transform:translateY(-1px); }}
-div[data-testid="stButton"] button[kind="primary"] {{
+:where(div[data-testid="stButton"] button:hover) {{ border-color:{ACCENT} !important; color:#fff !important; transform:translateY(-1px); }}
+:where(div[data-testid="stButton"] button[kind="primary"]) {{
     background:linear-gradient(135deg,{ACCENT},#a4142c) !important; border-color:transparent !important;
     color:#fff !important; box-shadow:0 4px 16px rgba(228,32,60,.35);
 }}
@@ -166,6 +156,25 @@ div[data-testid="stButton"] button[kind="primary"] {{
 .team-hd img {{ width:76px; height:76px; object-fit:contain; }}
 .team-hd .tname {{ font-family:'Bebas Neue'; font-size:2.3rem; color:#fff; line-height:1; letter-spacing:1px; }}
 .team-hd .tmeta {{ color:rgba(255,255,255,.85); font-weight:600; font-size:.95rem; margin-top:3px; }}
+div[class*="st-key-roster_"] button {{
+    border-radius:8px !important; justify-content:flex-start !important;
+    font-family:'Inter'; font-size:.86rem; font-weight:500; letter-spacing:0; text-transform:none;
+    padding:.5rem .7rem !important; border:1px solid transparent !important; background:transparent !important;
+    color:#E9EDF5 !important;
+}}
+div[class*="st-key-roster_"] button > div {{ justify-content:flex-start !important; width:100%; }}
+div[class*="st-key-roster_"] button p {{ text-align:left !important; }}
+div[class*="st-key-roster_"] button:hover {{
+    background:rgba(228,32,60,.10) !important; border-color:rgba(228,32,60,.35) !important; transform:none;
+}}
+.team-news-card {{ position:relative; height:100%; min-height:300px; border-radius:16px; overflow:hidden;
+    border:1px solid rgba(255,255,255,.08); display:flex; flex-direction:column; justify-content:flex-end;
+    padding:20px; }}
+.team-news-card .tn-tag {{ font-family:'Oswald'; font-size:.7rem; font-weight:700; letter-spacing:1.5px;
+    color:#fff; background:rgba(0,0,0,.35); display:inline-block; padding:3px 10px; border-radius:20px;
+    margin-bottom:12px; width:fit-content; }}
+.team-news-card .tn-title {{ font-family:'Bebas Neue'; font-size:1.6rem; color:#fff; margin-bottom:6px; }}
+.team-news-card .tn-sub {{ color:rgba(255,255,255,.75); font-size:.86rem; }}
 
 /* --- Clasificacion --- */
 .div-h {{ font-family:'Oswald'; font-weight:700; font-size:.9rem; letter-spacing:1px; color:#8A93A6; text-transform:uppercase;
@@ -321,6 +330,60 @@ def totals_table(pdf, week_range=None):
     return g
 
 
+def full_totals_table(pdf, week_range=None):
+    """Totales de temporada por jugador, incluyendo stats de ataque, defensa y equipos especiales."""
+    d = pdf
+    if week_range is not None:
+        d = d[(d["week"] >= week_range[0]) & (d["week"] <= week_range[1])]
+    agg = {c: (c, "max" if c in G.MAX_COLS else "sum") for c in G.STAT_COLS if c in d.columns}
+    g = d.groupby("player_display_name").agg(
+        position=("position", _mode), team=("team", _mode), **agg
+    ).reset_index()
+    g["total_tds"] = g.passing_tds + g.rushing_tds + g.receiving_tds
+    g["tackles"] = g.def_tackles_solo + g.def_tackles_with_assist
+    return g
+
+
+def metrics_for_position(pos):
+    """Metricas relevantes (etiqueta -> columna) para comparar jugadores de una posicion."""
+    pos = (pos or "").upper()
+    if pos == "QB":
+        return {"Yardas de pase": "passing_yards", "TD de pase": "passing_tds",
+                "Intercepciones": "passing_interceptions", "Yardas de carrera": "rushing_yards",
+                "TD de carrera": "rushing_tds"}
+    if pos in ("RB", "FB"):
+        return {"Yardas de carrera": "rushing_yards", "TD de carrera": "rushing_tds",
+                "Carreras": "carries", "Recepciones": "receptions",
+                "Yardas de recepcion": "receiving_yards"}
+    if pos in ("WR", "TE"):
+        return {"Recepciones": "receptions", "Objetivos": "targets",
+                "Yardas de recepcion": "receiving_yards", "TD de recepcion": "receiving_tds"}
+    if pos in G.DEF_POSITIONS:
+        return {"Tacleos": "tackles", "Sacks": "def_sacks",
+                "Tackles para perdida": "def_tackles_for_loss", "Presiones QB": "def_qb_hits",
+                "Intercepciones": "def_interceptions", "Pases defendidos": "def_pass_defended"}
+    if pos == "K":
+        return {"FG anotados": "fg_made", "FG intentados": "fg_att", "PAT anotados": "pat_made"}
+    if pos == "P":
+        return {"Despejes": "pt_att", "Yardas": "pt_yards"}
+    return {"TD totales": "total_tds"}
+
+
+@st.dialog("⚠️ Solo se puede comparar la misma posición")
+def position_mismatch_dialog(positions):
+    st.write("Has elegido jugadores de posiciones distintas, y no se pueden comparar entre si:")
+    for name, pos in positions.items():
+        st.write(f"- **{name}** — {pos or 'sin posición'}")
+    st.write("Compara QB con QB, WR con WR, y asi sucesivamente.")
+    keep_pos = Counter(positions.values()).most_common(1)[0][0]
+    if st.button(f"Quedarme solo con los {keep_pos}", type="primary", use_container_width=True):
+        st.session_state.cmp_players = [n for n, p in positions.items() if p == keep_pos]
+        st.rerun()
+    if st.button("Vaciar seleccion", use_container_width=True):
+        st.session_state.cmp_players = []
+        st.rerun()
+
+
 def leaderboard_data(pdf, colors, stat_col, week, n):
     d = pdf if week is None else pdf[pdf["week"] == week]
     g = d.groupby("player_display_name").agg(
@@ -372,6 +435,17 @@ def hero_html(items):
         )
     dots = "".join(f'<span class="hc-dot" style="animation-delay:-{i * 5}s"></span>' for i in range(5))
     return f'<div class="hero-carousel">{"".join(slides)}<div class="hc-dots">{dots}</div></div>'
+
+
+def team_news_html(meta):
+    grad = f"linear-gradient(150deg,{meta['color']}66,#0B0E14 80%)"
+    return (
+        f'<div class="team-news-card" style="background:{grad}">'
+        f'<div class="tn-tag">📰 NOTICIAS · {meta["name"].upper()}</div>'
+        f'<div class="tn-title">Próximamente</div>'
+        f'<div class="tn-sub">Aquí aparecerán las últimas noticias sobre este equipo.</div>'
+        f'</div>'
+    )
 
 
 def section_title(text, sub=None):
@@ -476,19 +550,24 @@ if page == "equipos":
 
     st.markdown("#### Plantilla")
     roster = totals_table(pdf[pdf.team == team])
-    if roster.empty:
-        st.info("No hay jugadores con estadisticas para este equipo en esta temporada.")
-    else:
-        roster["yds_total"] = roster.passing_yards + roster.rushing_yards + roster.receiving_yards
-        roster["td_total"] = roster.passing_tds + roster.rushing_tds + roster.receiving_tds
-        roster = roster.sort_values(["yds_total", "td_total"], ascending=False)
-        show_r = {"player_display_name": "Jugador", "position": "Pos",
-                  "passing_yards": "Yds pase", "passing_tds": "TD pase",
-                  "rushing_yards": "Yds tierra", "rushing_tds": "TD tierra",
-                  "receptions": "Recep.", "receiving_yards": "Yds recep.",
-                  "receiving_tds": "TD recep.", "td_total": "TD tot."}
-        st.dataframe(roster[list(show_r)].rename(columns=show_r).set_index("Jugador"),
-                     use_container_width=True, height=420)
+    p_left, p_right = st.columns([1.6, 1])
+    with p_left:
+        if roster.empty:
+            st.info("No hay jugadores con estadisticas para este equipo en esta temporada.")
+        else:
+            roster["yds_total"] = roster.passing_yards + roster.rushing_yards + roster.receiving_yards
+            roster["td_total"] = roster.passing_tds + roster.rushing_tds + roster.receiving_tds
+            roster = roster.sort_values(["yds_total", "td_total"], ascending=False)
+            with st.container(height=420, border=True):
+                for _, row in roster.iterrows():
+                    label = f"{row.player_display_name}  ·  {row.position or '?'}"
+                    if st.button(label, key=f"roster_{team}_{row.player_display_name}",
+                                 use_container_width=True):
+                        st.session_state.sel_player = row.player_display_name
+                        st.session_state.page = "jugadores"
+                        st.rerun()
+    with p_right:
+        st.markdown(team_news_html(meta), unsafe_allow_html=True)
 
 # ---------------------------------------------------------------------------
 # PAGINA — Clasificacion (general y por conferencia/division)
@@ -564,62 +643,67 @@ elif page == "rankings":
 # PAGINA — Comparador
 # ---------------------------------------------------------------------------
 elif page == "comparar":
-    section_title("Comparador", "Enfrenta a dos o mas jugadores cara a cara.")
+    section_title("Comparador", "Enfrenta a jugadores de la misma posición cara a cara.")
     scope = st.radio("Ambito", ["Temporada completa", "Rango de jornadas"],
                      horizontal=True, key="cmp_scope")
     wr = None
     if scope == "Rango de jornadas" and len(weeks) > 1:
         wr = st.slider("Jornadas", min(weeks), max(weeks), (min(weeks), max(weeks)))
-    totals = totals_table(pdf, wr)
-    active = totals[(totals.passing_yards + totals.rushing_yards
-                     + totals.receiving_yards) > 0]
-    cnames = sorted(active.player_display_name.tolist())
+    totals = full_totals_table(pdf, wr)
+    cnames = sorted(all_names)
     default = [n for n in ["Josh Allen", "Lamar Jackson", "Jalen Hurts"]
                if n in cnames][:2]
-    picked = st.multiselect("🔍 Busca y elige jugadores a comparar", cnames, default=default)
-    metric_label = st.selectbox("Metrica del grafico de barras",
-                                list(METRICS.keys()), index=0)
+    picked = st.multiselect("🔍 Busca y elige jugadores a comparar (misma posición)",
+                            cnames, default=default, key="cmp_players")
     if not picked:
         st.info("Elige al menos un jugador para empezar.")
     else:
         sel = totals[totals.player_display_name.isin(picked)].copy()
-        show = {"player_display_name": "Jugador", "position": "Pos", "team": "Equipo",
-                "passing_yards": "Yds pase", "passing_tds": "TD pase",
-                "passing_interceptions": "INT", "rushing_yards": "Yds tierra",
-                "rushing_tds": "TD tierra", "receptions": "Recep.",
-                "receiving_yards": "Yds recep.", "total_tds": "TD tot."}
-        st.dataframe(sel[list(show)].rename(columns=show).set_index("Jugador"),
-                     use_container_width=True)
-        c1, c2 = st.columns(2)
-        with c1:
-            st.markdown(f"<h3>{metric_label}</h3>", unsafe_allow_html=True)
-            mcol = METRICS[metric_label]
-            b = sel.sort_values(mcol)
-            fig = go.Figure(go.Bar(
-                x=b[mcol], y=b.player_display_name, orientation="h",
-                marker_color=[colors.get(t, ACCENT) for t in b.team],
-                text=b[mcol], textposition="outside"))
-            fig.update_layout(template="plotly_dark", paper_bgcolor="rgba(0,0,0,0)",
-                plot_bgcolor="rgba(0,0,0,0)", height=90 + 70 * len(b),
-                margin=dict(l=10, r=30, t=10, b=10), font=dict(color=FG), showlegend=False)
-            st.plotly_chart(fig, use_container_width=True)
-        with c2:
-            st.markdown("<h3>Perfil comparado (radar)</h3>", unsafe_allow_html=True)
-            lbls, acols = list(RADAR_AXES), list(RADAR_AXES.values())
-            mx = {c: max(sel[c].max(), 1) for c in acols}
-            radar = go.Figure()
-            for _, row in sel.iterrows():
-                vv = [row[c] / mx[c] for c in acols]
-                radar.add_trace(go.Scatterpolar(
-                    r=vv + [vv[0]], theta=lbls + [lbls[0]], fill="toself",
-                    name=row.player_display_name, line_color=colors.get(row.team, ACCENT)))
-            radar.update_layout(template="plotly_dark", paper_bgcolor="rgba(0,0,0,0)",
-                polar=dict(bgcolor=CARD, radialaxis=dict(visible=True, range=[0, 1],
-                    showticklabels=False)), height=430,
-                margin=dict(l=30, r=30, t=30, b=30), font=dict(color=FG),
-                legend=dict(orientation="h", y=-0.1))
-            st.plotly_chart(radar, use_container_width=True)
-        st.caption("El radar normaliza cada eje respecto al mejor de los elegidos.")
+        positions = dict(zip(sel.player_display_name, sel.position))
+        unique_pos = sorted(set(positions.values()))
+        if len(unique_pos) > 1:
+            st.error("⚠️ Has elegido jugadores de posiciones distintas: "
+                     + ", ".join(f"{n} ({p})" for n, p in positions.items()))
+            position_mismatch_dialog(positions)
+        else:
+            pos = unique_pos[0]
+            metric_map = metrics_for_position(pos)
+            show = {"player_display_name": "Jugador", "position": "Pos", "team": "Equipo"}
+            show.update({col: label for label, col in metric_map.items()})
+            st.dataframe(sel[list(show)].rename(columns=show).set_index("Jugador"),
+                         use_container_width=True)
+            metric_label = st.selectbox("Metrica del grafico de barras",
+                                        list(metric_map.keys()), index=0)
+            c1, c2 = st.columns(2)
+            with c1:
+                st.markdown(f"<h3>{metric_label}</h3>", unsafe_allow_html=True)
+                mcol = metric_map[metric_label]
+                b = sel.sort_values(mcol)
+                fig = go.Figure(go.Bar(
+                    x=b[mcol], y=b.player_display_name, orientation="h",
+                    marker_color=[colors.get(t, ACCENT) for t in b.team],
+                    text=b[mcol], textposition="outside"))
+                fig.update_layout(template="plotly_dark", paper_bgcolor="rgba(0,0,0,0)",
+                    plot_bgcolor="rgba(0,0,0,0)", height=90 + 70 * len(b),
+                    margin=dict(l=10, r=30, t=10, b=10), font=dict(color=FG), showlegend=False)
+                st.plotly_chart(fig, use_container_width=True)
+            with c2:
+                st.markdown(f"<h3>Perfil comparado · {pos}</h3>", unsafe_allow_html=True)
+                lbls, acols = list(metric_map.keys()), list(metric_map.values())
+                mx = {c: max(sel[c].max(), 1) for c in acols}
+                radar = go.Figure()
+                for _, row in sel.iterrows():
+                    vv = [row[c] / mx[c] for c in acols]
+                    radar.add_trace(go.Scatterpolar(
+                        r=vv + [vv[0]], theta=lbls + [lbls[0]], fill="toself",
+                        name=row.player_display_name, line_color=colors.get(row.team, ACCENT)))
+                radar.update_layout(template="plotly_dark", paper_bgcolor="rgba(0,0,0,0)",
+                    polar=dict(bgcolor=CARD, radialaxis=dict(visible=True, range=[0, 1],
+                        showticklabels=False)), height=430,
+                    margin=dict(l=30, r=30, t=30, b=30), font=dict(color=FG),
+                    legend=dict(orientation="h", y=-0.1))
+                st.plotly_chart(radar, use_container_width=True)
+            st.caption("El radar normaliza cada eje respecto al mejor de los elegidos.")
 
 # ---------------------------------------------------------------------------
 # PAGINA — Jugadores (buscador + estrellas + ficha con tarjeta)
