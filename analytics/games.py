@@ -11,6 +11,14 @@ def highlight_week(sched):
     return int(sched.week.max())
 
 
+def completed_week(sched):
+    """Ultima jornada con partidos ya disputados, o None si todavia no se ha jugado ninguna."""
+    played = sched[sched.home_score.notna()]
+    if played.empty:
+        return None
+    return int(played.week.max())
+
+
 def featured_game(games, team_pct):
     """De los partidos de una jornada, el que tiene mayor brecha de percentil EPA (Duelo Clave).
 

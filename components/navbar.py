@@ -4,6 +4,7 @@ import streamlit as st
 
 PAGES_PRIMARY = [
     ("home", "🏠 Inicio"),
+    ("weekly", "📰 Weekly"),
     ("equipos", "🏟️ Equipos"),
     ("clasificacion", "📋 Clasificación"),
     ("rankings", "🏆 Rankings"),

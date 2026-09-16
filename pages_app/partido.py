@@ -13,6 +13,7 @@ from analytics.efficiency import team_efficiency_table
 from analytics.explanations import breakdown_insight, epa_breakdown
 from analytics.game_summary import game_pbp, key_factors, quarter_epa_evolution, team_boxscore
 from analytics.matchups import duelo_clave, with_percentiles
+from analytics.totals import top_performers
 from components.explanation import why_expander
 from data.loaders import load_pbp
 
@@ -42,14 +43,6 @@ def _boxscore_html(home_box, away_box, home_name, away_name):
         for label, h, a in rows
     )
     return head + body
-
-
-def _top_performers(pdf, week, teams, n=4):
-    pool = pdf[(pdf.week == week) & (pdf.team.isin(teams))].copy()
-    tds = pool.passing_tds.fillna(0) + pool.rushing_tds.fillna(0) + pool.receiving_tds.fillna(0)
-    yards = pool.passing_yards.fillna(0) + pool.rushing_yards.fillna(0) + pool.receiving_yards.fillna(0)
-    pool["_sort"] = tds * 6 + yards
-    return pool[pool["_sort"] > 0].sort_values("_sort", ascending=False).head(n)
 
 
 def render(ctx):
@@ -145,7 +138,7 @@ def render(ctx):
         st.caption("No hay suficiente detalle de jugada a jugada para mostrar la evolución por cuarto "
                    "de este partido.")
 
-    top = _top_performers(ctx.pdf, week, [home, away])
+    top = top_performers(ctx.pdf, week, teams=[home, away])
     if not top.empty:
         st.markdown("#### ⭐ Jugadores destacados")
         cols = st.columns(len(top))

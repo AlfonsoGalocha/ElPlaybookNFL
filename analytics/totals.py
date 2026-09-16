@@ -85,6 +85,21 @@ def team_stat_tiles(std_row, s):
     ]
 
 
+def top_performers(pdf, week, teams=None, n=4):
+    """Jugadores con mas produccion en una jornada (TDs*6 + yardas totales), opcionalmente
+    limitado a un conjunto de equipos. Criterio de anotacion/produccion real, no un ranking
+    de una sola columna arbitraria."""
+    pool = pdf[pdf.week == week]
+    if teams is not None:
+        pool = pool[pool.team.isin(teams)]
+    pool = pool.copy()
+    tds = pool.passing_tds.fillna(0) + pool.rushing_tds.fillna(0) + pool.receiving_tds.fillna(0)
+    yards = pool.passing_yards.fillna(0) + pool.rushing_yards.fillna(0) + pool.receiving_yards.fillna(0)
+    pool["_score"] = tds * 6 + yards
+    pool = pool[pool["_score"] > 0].sort_values("_score", ascending=False)
+    return pool.head(n) if n else pool
+
+
 def player_season(pdf, name):
     p = pdf[pdf.player_display_name == name]
     pos = mode(p["position"])
