@@ -31,18 +31,26 @@ def _game_card(g, team_meta):
     away_meta = team_meta.get(g.away_team, {})
     played = pd.notna(g.home_score) and pd.notna(g.away_score)
     madrid = _madrid_time(g.gameday, g.gametime)
-    when = (f"{WEEKDAY_ES.get(madrid.strftime('%A'), madrid.strftime('%A'))} "
-            f"{madrid.strftime('%d/%m')} · {madrid.strftime('%H:%M')} (hora España)") if madrid else g.gameday
-    score = f"{int(g.away_score)} - {int(g.home_score)}" if played else "vs"
+    when = (f"{WEEKDAY_ES.get(madrid.strftime('%A'), madrid.strftime('%A')).capitalize()} "
+            f"{madrid.strftime('%d/%m')} · {madrid.strftime('%H:%M')}h") if madrid else g.gameday
+
+    if played:
+        center = (f'<div class="game-score">{int(g.away_score)} - {int(g.home_score)}</div>'
+                  f'<div class="game-final">FINAL</div>')
+    else:
+        center = f'<div class="game-vs">VS</div><div class="game-time">{when}</div>'
+
     return f"""
-      <div class="lb-row fade-up">
-        <img class="lb-photo" src="{away_meta.get('logo','')}" style="border-radius:8px;background:transparent">
-        <div class="lb-info">
-          <div class="lb-name">{away_meta.get('name', g.away_team)} @ {home_meta.get('name', g.home_team)}</div>
-          <div class="lb-meta">{when}{' · FINAL' if played else ''}</div>
+      <div class="game-card fade-up">
+        <div class="game-team gt-home">
+          <div class="gt-name">{home_meta.get('name', g.home_team)}</div>
+          <img src="{home_meta.get('logo', '')}"/>
         </div>
-        <div class="lb-value">{score}</div>
-        <img class="lb-photo" src="{home_meta.get('logo','')}" style="border-radius:8px;background:transparent;margin-left:8px">
+        <div class="game-center"><div class="game-pill">{center}</div></div>
+        <div class="game-team gt-away">
+          <img src="{away_meta.get('logo', '')}"/>
+          <div class="gt-name">{away_meta.get('name', g.away_team)}</div>
+        </div>
       </div>"""
 
 

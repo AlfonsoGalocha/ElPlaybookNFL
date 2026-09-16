@@ -9,11 +9,24 @@ def css_block():
     return f"""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap');
+
+/* --- Sistema de diseno: variables de color --- */
+:root {{
+    --bg-main:#0E1117; --bg-card:#1B1E2B; --bg-card-alt:#181B26; --border-subtle:#2A2D3E;
+    --accent-red:{ACCENT}; --accent-blue:{ACCENT2};
+    --text-primary:#FFFFFF; --text-secondary:#9CA3AF; --text-amber:#F59E0B;
+}}
 html, body, [class*="css"] {{ font-family:'Inter', sans-serif; }}
-.stApp {{ background: radial-gradient(1200px 560px at 12% -12%, #35203a 0%, #171B24 45%),
-                       radial-gradient(1000px 480px at 100% 0%, #163756 0%, #171B24 55%); color:#E9EDF5; }}
-#MainMenu, footer, header {{ visibility:hidden; }}
-.block-container {{ padding-top:1rem; padding-bottom:0; padding-left:2.2rem; padding-right:2.2rem; max-width:1680px; }}
+.stApp {{ background: radial-gradient(1200px 560px at 12% -12%, #35203a 0%, var(--bg-main) 45%),
+                       radial-gradient(1000px 480px at 100% 0%, #163756 0%, var(--bg-main) 55%); color:#E9EDF5; }}
+
+/* --- Ocultar chrome por defecto de Streamlit --- */
+#MainMenu, footer, header[data-testid="stHeader"], [data-testid="stToolbar"],
+[data-testid="stDecoration"], [data-testid="stStatusWidget"], .stAppDeployButton,
+[data-testid="stAppDeployButton"] {{
+    display:none !important; visibility:hidden !important; height:0 !important;
+}}
+.block-container {{ padding-top:1.1rem !important; padding-bottom:0; padding-left:2.2rem; padding-right:2.2rem; max-width:1680px; }}
 h1,h2,h3 {{ font-family:'Oswald', sans-serif; letter-spacing:.5px; color:#fff; }}
 
 @keyframes fadeUp {{ from {{ opacity:0; transform:translateY(14px); }} to {{ opacity:1; transform:translateY(0); }} }}
@@ -38,41 +51,78 @@ h1,h2,h3 {{ font-family:'Oswald', sans-serif; letter-spacing:.5px; color:#fff; }
     color:#fff !important; box-shadow:0 4px 16px rgba(228,32,60,.35);
 }}
 
-/* --- Hero carousel --- */
-.hero-carousel {{ position:relative; height:260px; border-radius:20px; overflow:hidden; margin:.2rem 0 1.4rem;
-    border:1px solid rgba(255,255,255,.08); }}
-.hc-slide {{ position:absolute; inset:0; display:flex; flex-direction:column; justify-content:flex-end;
-    padding:22px 28px; text-decoration:none; opacity:0; animation:hcFade 25s infinite ease-in-out; }}
-@keyframes hcFade {{ 0%{{opacity:1}} 16%{{opacity:1}} 20%{{opacity:0}} 96%{{opacity:0}} 100%{{opacity:0}} }}
-.hc-tag {{ font-family:'Oswald'; font-size:.72rem; font-weight:700; letter-spacing:2px; color:#fff;
-    background:rgba(0,0,0,.35); display:inline-block; padding:3px 10px; border-radius:20px; margin-bottom:10px;
-    width:fit-content; }}
-.hc-title {{ font-family:'Bebas Neue'; font-size:2.1rem; line-height:1.05; color:#fff; max-width:78%;
-    text-shadow:0 2px 12px rgba(0,0,0,.5); }}
-.hc-cta {{ color:#fff; opacity:.85; font-size:.82rem; font-weight:600; margin-top:8px; }}
-.hc-dots {{ position:absolute; bottom:14px; right:20px; display:flex; gap:6px; z-index:2; }}
-.hc-dot {{ width:22px; height:4px; border-radius:3px; background:rgba(255,255,255,.25); animation:hcDot 25s infinite; }}
-@keyframes hcDot {{ 0%{{background:#fff}} 16%{{background:#fff}} 20%{{background:rgba(255,255,255,.25)}} 100%{{background:rgba(255,255,255,.25)}} }}
+/* --- Menu "Herramientas" (st.popover) --- */
+div[data-testid="stPopover"] > div > button, div[data-testid="stPopover"] button[kind="secondary"],
+div[data-testid="stPopover"] button[kind="primary"] {{
+    border-radius:999px !important; font-family:'Oswald'; font-size:.78rem; letter-spacing:.2px;
+    padding:.4rem .9rem !important; white-space:nowrap; transition:all .18s ease;
+}}
+div[data-testid="stPopoverBody"], div[data-baseweb="popover"] div[role="tooltip"] {{
+    background:var(--bg-card) !important; border:1px solid var(--border-subtle) !important;
+    border-radius:14px !important; padding:.6rem !important;
+}}
 
-/* Slides con imagen protagonista (equipo/jugador): texto a la izq., visual grande a la der. */
-.hc-slide-visual {{ flex-direction:row; align-items:center; justify-content:space-between; gap:18px; }}
-.hc-text {{ flex:1 1 auto; min-width:0; display:flex; flex-direction:column; justify-content:center; }}
-.hc-text .hc-title {{ max-width:100%; }}
-.hc-visual {{ flex:0 0 38%; max-width:38%; height:82%; display:flex; align-items:center; justify-content:center; }}
-.hc-visual-logo {{ max-height:100%; max-width:100%; object-fit:contain; filter:drop-shadow(0 8px 20px rgba(0,0,0,.4)); }}
-.hc-visual-photo {{ height:100%; max-height:180px; width:auto; aspect-ratio:1/1; object-fit:cover; border-radius:50%;
-    border:4px solid rgba(255,255,255,.3); background:#222; }}
-.hc-visual-team-row {{ display:flex; align-items:center; justify-content:center; gap:10px; width:100%; height:100%; }}
-.hc-visual-mini-logo {{ max-height:78%; max-width:30%; object-fit:contain; filter:drop-shadow(0 4px 10px rgba(0,0,0,.4)); }}
-.hc-visual-vs-row {{ display:flex; align-items:center; justify-content:center; gap:16px; width:100%; height:100%; }}
-.hc-visual-duel-logo {{ max-height:100%; max-width:42%; object-fit:contain; filter:drop-shadow(0 6px 16px rgba(0,0,0,.4)); }}
-.hc-visual-vs-text {{ font-family:'Bebas Neue'; font-size:1.9rem; color:#fff; opacity:.85; flex:0 0 auto; }}
+/* --- Hero banner (2 columnas estaticas) --- */
+div[class*="st-key-hero_banner"] > div {{
+    background:linear-gradient(135deg,{ACCENT}26,var(--bg-card) 55%);
+    border:1px solid rgba(255,255,255,.08); border-radius:20px; padding:28px 32px; margin:.2rem 0 1.4rem;
+}}
+.hero-badge {{ font-family:'Oswald'; font-size:.72rem; font-weight:700; letter-spacing:2px; color:#fff;
+    background:rgba(0,0,0,.35); display:inline-block; padding:4px 12px; border-radius:20px; margin-bottom:14px;
+    width:fit-content; }}
+.hero-headline {{ font-family:'Bebas Neue'; font-size:2.6rem; line-height:1.05; color:#fff; letter-spacing:.5px; }}
+.hero-sub {{ color:var(--text-secondary); font-size:.96rem; margin:12px 0 18px; max-width:92%; line-height:1.4; }}
+div[class*="st-key-hero_banner"] div[data-testid="stButton"] button[kind="primary"] {{
+    padding:.6rem 1.3rem !important; font-size:.85rem !important;
+}}
+
+/* Widget dinamico de la derecha (Partido de la Semana / lider / noticia) */
+.hero-widget-card {{ background:rgba(0,0,0,.28); border:1px solid rgba(255,255,255,.10); border-radius:16px;
+    padding:20px; height:100%; display:flex; flex-direction:column; justify-content:center;
+    text-decoration:none; transition:border-color .18s ease; }}
+a.hero-widget-card:hover {{ border-color:{ACCENT}; }}
+.hw-tag {{ font-family:'Oswald'; font-size:.68rem; font-weight:700; letter-spacing:1.5px; color:var(--text-amber);
+    margin-bottom:12px; }}
+.hw-duel-row {{ display:flex; align-items:center; justify-content:center; gap:14px; }}
+.hw-team {{ display:flex; flex-direction:column; align-items:center; gap:6px; flex:1; min-width:0; }}
+.hw-team img {{ width:56px; height:56px; object-fit:contain; }}
+.hw-team span {{ font-family:'Oswald'; font-weight:700; font-size:.85rem; color:#fff; }}
+.hw-vs {{ font-family:'Bebas Neue'; font-size:1.3rem; color:var(--text-secondary); flex:0 0 auto; }}
+.hw-sub {{ text-align:center; color:var(--text-secondary); font-size:.78rem; margin-top:12px; }}
+.hw-leader-row {{ display:flex; align-items:center; gap:14px; }}
+.hw-leader-logo {{ width:56px; height:56px; object-fit:contain; }}
+.hw-leader-name {{ font-family:'Oswald'; font-weight:700; font-size:1.15rem; color:#fff; }}
+.hw-leader-record {{ color:var(--text-secondary); font-size:.85rem; margin-top:2px; }}
+.hw-news-title {{ font-family:'Oswald'; font-weight:600; font-size:1.05rem; color:#fff; line-height:1.3; }}
+.hw-news-cta {{ color:{ACCENT}; font-size:.82rem; font-weight:600; margin-top:10px; }}
 @media (max-width:900px) {{
-  .hero-carousel {{ height:320px; }}
-  .hc-slide-visual {{ flex-direction:column-reverse; justify-content:center; text-align:center; padding:16px 20px; }}
-  .hc-text {{ align-items:center; }}
-  .hc-visual {{ flex:0 0 44%; max-width:100%; width:100%; height:44%; margin-bottom:8px; }}
-  .hc-title {{ max-width:100%; }}
+  div[class*="st-key-hero_banner"] > div {{ padding:20px; }}
+  .hero-headline {{ font-size:2rem; }}
+  .hero-sub {{ max-width:100%; }}
+}}
+
+/* --- Tarjetas de partido (Jornada · horarios en España) --- */
+.game-card {{ display:flex; align-items:center; background:var(--bg-card-alt); border:1px solid var(--border-subtle);
+    border-radius:12px; padding:14px 18px; margin-bottom:12px; transition:border-color .18s ease; }}
+.game-card:hover {{ border-color:{ACCENT}; }}
+.game-team {{ flex:0 0 40%; max-width:40%; display:flex; align-items:center; gap:12px; min-width:0; }}
+.game-team.gt-home {{ justify-content:flex-end; text-align:right; }}
+.game-team.gt-away {{ justify-content:flex-start; text-align:left; }}
+.game-team img {{ width:44px; height:44px; object-fit:contain; flex:0 0 auto; }}
+.game-team .gt-name {{ font-family:'Oswald'; font-weight:700; font-size:1rem; color:var(--text-primary);
+    line-height:1.15; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }}
+.game-center {{ flex:0 0 20%; max-width:20%; display:flex; flex-direction:column; align-items:center; gap:4px; }}
+.game-pill {{ background:rgba(255,255,255,.06); border:1px solid var(--border-subtle); border-radius:20px;
+    padding:5px 14px; text-align:center; }}
+.game-vs {{ font-family:'Bebas Neue'; font-size:1.15rem; color:var(--text-primary); letter-spacing:1px; }}
+.game-score {{ font-family:'Bebas Neue'; font-size:1.35rem; color:var(--text-primary); letter-spacing:1px; }}
+.game-time {{ color:var(--text-amber); font-size:.72rem; font-weight:600; margin-top:5px; text-align:center; white-space:nowrap; }}
+.game-final {{ color:var(--text-secondary); font-size:.68rem; font-weight:700; letter-spacing:1px; margin-top:2px; }}
+@media (max-width:720px) {{
+  .game-card {{ flex-wrap:wrap; }}
+  .game-team {{ flex:0 0 42%; max-width:42%; }}
+  .game-team .gt-name {{ font-size:.82rem; white-space:normal; }}
+  .game-center {{ flex:0 0 100%; max-width:100%; order:3; margin-top:10px; }}
 }}
 
 /* --- Titulos de seccion --- */
