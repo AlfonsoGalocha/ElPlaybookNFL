@@ -17,6 +17,19 @@ streamlit run panel_nfl.py
 Abre `http://localhost:8501`. Los datos de la NFL se descargan la primera vez
 (nflreadpy) y quedan cacheados en memoria durante la sesión del proceso.
 
+### Tests
+
+```bash
+pip install -r requirements-dev.txt   # añade pytest sobre requirements.txt
+pytest
+```
+
+Ahora mismo cubren la integración de Google Analytics 4 (`tests/test_tracking.py`):
+que no se rompe nada sin `GOOGLE_ANALYTICS_ID`, que el ID configurado se usa
+correctamente, que los eventos no llevan datos personales y que no hay
+duplicación evidente del tracking. No se instalan en la imagen Docker (ver
+`.dockerignore`) — son solo para desarrollo.
+
 ### Variables de entorno (opcionales)
 
 Copia `.env.example` a `.env` y rellena solo lo que necesites — la app arranca
@@ -135,6 +148,95 @@ El Playbook NFL
   `www.elplaybooknfl.com` → `elplaybooknfl.com`, o al revés) y haz que el
   hosting/proxy redirija 301 el que no uses hacia el canónico. Streamlit no
   necesita saber cuál es — es puramente configuración de DNS/proxy.
+
+## Analytics (Google Analytics 4)
+
+GA4 está integrado pero **apagado por defecto**: no se carga ningún script ni se
+manda ningún evento mientras `GOOGLE_ANALYTICS_ID` esté vacío. Todo el código vive en
+`components/head_tags.py` (carga del script `gtag.js`) y `components/tracking.py`
+(eventos), y se explica con más detalle en el docstring de ese segundo archivo.
+
+### Configurarlo en local
+
+```bash
+export GOOGLE_ANALYTICS_ID=G-XXXXXXXXXX   # tu Measurement ID real de GA4
+streamlit run panel_nfl.py
+```
+
+O añádelo a tu `.env` (a partir de `.env.example`) y expórtalo como el resto de
+variables (`export $(cat .env | xargs)`) — Streamlit no lee `.env` solo.
+
+### Configurarlo en Cloud Run
+
+Como cualquier otra variable de entorno del contenedor, sin nada especial para GA4:
+
+```bash
+gcloud run deploy elplaybooknfl \
+  --image <tu-imagen> \
+  --set-env-vars GOOGLE_ANALYTICS_ID=G-XXXXXXXXXX
+```
+
+O en la consola: Cloud Run → tu servicio → *Editar e implementar nueva revisión* →
+*Variables y secretos* → añadir `GOOGLE_ANALYTICS_ID` con el Measurement ID. Para no
+dejarlo a la vista en la configuración del servicio también puedes guardarlo como
+*Secret* en Secret Manager y montarlo como variable de entorno desde ahí — GA4 no lo
+exige (el Measurement ID no es secreto, aparece en el HTML de cualquier página que lo
+use), pero es una opción válida si prefieres gestionarlo así.
+
+### Comprobar que GA4 recibe datos
+
+1. Con `GOOGLE_ANALYTICS_ID` configurado, abre la app y mira el código fuente/DevTools
+   → Network: debe pedirse `https://www.googletagmanager.com/gtag/js?id=G-...`.
+2. En GA4 → **Informes → Tiempo real**, navega por la app (Home, Clasificación,
+   Equipos, un jugador...) y confirma que aparecen usuarios activos y los
+   `page_view`/eventos correspondientes (puede tardar unos segundos).
+3. GA4 → **Configurar → DebugView** (con la extensión de Chrome "Google Analytics
+   Debugger" activada, o añadiendo `gtag('config', 'G-...', {debug_mode: true})`
+   temporalmente) muestra cada evento con sus parámetros al momento — útil para
+   verificar que `team_viewed`, `player_viewed`, etc. llevan los parámetros
+   esperados y ningún dato personal.
+
+### Eventos implementados
+
+| Evento | Cuándo | Parámetros |
+|---|---|---|
+| `page_view` | Al cambiar de página/sección (una vez por página, no por rerun) | `page_title`, `page_path` |
+| `team_viewed` | Al ver la ficha de un equipo | `team` |
+| `player_viewed` | Al ver la ficha de un jugador | `player` |
+| `matchup_viewed` | Al comparar dos equipos en Matchups | `team_home`, `team_away` |
+| `laboratory_viewed` | Al abrir Laboratorio | — |
+| `trend_viewed` | Al abrir Tendencias | — |
+| `football_iq_viewed` | Al abrir Football IQ | — |
+| `quiz_completed` | Al terminar un quiz | `level`, `score`, `total`, `attempt` |
+| `share_result` | Al generar una imagen para compartir (quiz/equipo/jugador) | `content_type` |
+
+Ninguno de estos eventos manda nombres de usuario, emails, IPs ni ningún otro dato
+personal — solo contenido público de la propia app (equipo, jugador, nivel de quiz...).
+El dispositivo/navegador lo detecta GA4 automáticamente a partir de la petición HTTP,
+sin código adicional nuestro.
+
+### Limitación conocida: consentimiento de cookies
+
+El proyecto **todavía no tiene ningún banner ni gestor de consentimiento de
+cookies**. Tal y como está, si defines `GOOGLE_ANALYTICS_ID` en producción, GA4 se
+activa para todo el mundo sin pedir consentimiento antes — lo cual **no cumple** con
+el RGPD/LSSI-CE para cookies analíticas con visitantes de la UE.
+
+No se ha implementado un banner de consentimiento en este cambio a propósito, para no
+improvisar un sistema de consentimiento (con las implicaciones legales que tiene
+hacerlo mal). Antes de activar `GOOGLE_ANALYTICS_ID` con tráfico real:
+
+1. Implementar un banner de consentimiento de cookies (aceptar/rechazar analíticas)
+   antes de cargar `gtag.js`.
+2. Enganchar el consentimiento en `components/head_tags.py::inject_head_scripts()`
+   — está marcado con un `TODO(consentimiento)` justo donde hay que añadirlo — para
+   que no se ejecute nada de GA4/AdSense hasta que `user_has_consented()` (o
+   equivalente) devuelva `True`.
+3. Actualizar `pages_app/legal.py` (`_cookies()`) con el mecanismo real para
+   retirar el consentimiento.
+
+Hasta entonces, usa `GOOGLE_ANALYTICS_ID` solo en desarrollo/pruebas propias, no en
+el despliegue público con visitantes reales.
 
 ## Próximo paso recomendado
 

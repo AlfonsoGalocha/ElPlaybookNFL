@@ -2,6 +2,7 @@
 
 import streamlit as st
 
+from components.tracking import track_quiz_completed, track_share_result
 from content.quiz_bank import LEVEL_LABELS, QUESTIONS
 from share.cards import quiz_result_card
 
@@ -11,6 +12,10 @@ def _reset(level):
     st.session_state.quiz_idx = 0
     st.session_state.quiz_score = 0
     st.session_state.quiz_answers = {}
+    # Sube en cada partida nueva (incluido "Repetir") para que quiz_completed
+    # distinga una repeticion real de un simple rerun sobre la misma pantalla
+    # de resultado — ver components/tracking.py::track_quiz_completed.
+    st.session_state.quiz_attempt = st.session_state.get("quiz_attempt", 0) + 1
 
 
 def _level_picker():
@@ -38,6 +43,7 @@ def render(ctx):
     if idx >= len(questions):
         score = st.session_state.get("quiz_score", 0)
         total = len(questions)
+        track_quiz_completed(level, score, total, st.session_state.get("quiz_attempt", 0))
         st.markdown(f"""
           <div class="quiz-card" style="text-align:center">
             <div class="conf-h" style="margin-top:0">{LEVEL_LABELS[level]}</div>
@@ -57,6 +63,7 @@ def render(ctx):
             if st.button("📤 Generar imagen para compartir", use_container_width=True, type="primary"):
                 with st.spinner("Generando..."):
                     png = quiz_result_card(LEVEL_LABELS[level], score, total)
+                track_share_result("quiz")
                 st.image(png, width=280)
                 st.download_button("⬇️ Descargar PNG", png,
                                    file_name=f"quiz_{level}_{score}de{total}.png", mime="image/png")
