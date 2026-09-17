@@ -76,7 +76,7 @@ div[data-testid="stPopoverBody"], div[data-baseweb="popover"] div[role="tooltip"
 @keyframes heroFade {{ from {{ opacity:0; transform:translateY(6px); }} to {{ opacity:1; transform:translateY(0); }} }}
 div[class*="st-key-hero_banner"] {{
     background:linear-gradient(135deg,{ACCENT}26,var(--bg-card) 55%);
-    border:1px solid rgba(255,255,255,.08); border-radius:20px; padding:34px 26px 30px; margin:.2rem 0 1.4rem;
+    border:1px solid rgba(255,255,255,.08); border-radius:20px; padding:34px 26px 30px; margin:1.1rem 0 1.4rem;
 }}
 div[class*="st-key-hero_banner"] > div {{ background:transparent; border:none; padding:0; margin:0; }}
 .hero-slide-body {{ text-align:center; animation:heroFade 220ms var(--ease-out) both; }}
