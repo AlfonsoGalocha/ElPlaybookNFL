@@ -15,10 +15,12 @@ de estos nombres (cualquiera de estas extensiones vale: `.jpg`, `.jpeg`,
 | Slide                          | Nombre de archivo |
 |---------------------------------|--------------------|
 | Highlights de la jornada         | `highlights.jpg`  |
-| General (clasificación/equipos)  | `general.jpg`     |
 | MVP de la jornada                | `mvp.jpg`         |
 | Próximo partido clave             | `big_game.jpg`    |
 | Trivia / Quiz                    | `trivia.jpg`      |
+
+El slide "General" no usa imagen manual: muestra automáticamente el podio
+(logo + récord) de los 3 primeros equipos de la clasificación en vivo.
 
 Recomendado: imágenes horizontales (~1200×500px o similar), peso razonable
 (unos pocos cientos de KB) para que la Home no tarde en cargar.
