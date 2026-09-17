@@ -8,3 +8,50 @@ font = "sans serif"
 
 [browser]
 gatherUsageStats = false
+
+[server]
+# Escucha en todas las interfaces: imprescindible en Docker/detras de un
+# reverse proxy (nginx, Caddy, Cloud Run...), que reenvia trafico al
+# contenedor por su IP interna, no por "localhost".
+address = "0.0.0.0"
+headless = true
+
+# El puerto real en produccion lo fija la plataforma de hosting via la
+# variable de entorno $PORT (ver Dockerfile/DEPLOY.md). Este valor solo
+# aplica en local si no se pasa --server.port explicitamente.
+port = 8501
+
+# CORS y XSRF quedan en sus valores seguros por defecto de Streamlit.
+# Casi ningun reverse proxy necesita tocarlos: al reenviar las peticiones
+# de forma transparente, el navegador sigue viendo un unico origen (el
+# dominio publico) y estas protecciones funcionan sin cambios. Si el
+# proxy elegido reescribe cabeceras Origin/Host de forma agresiva y el
+# WebSocket de Streamlit deja de conectar, revisa DEPLOY.md antes de
+# desactivar ninguna de las dos (desactivar CORS desactiva tambien XSRF).
+enableCORS = true
+enableXsrfProtection = true
+
+# Lista blanca de hosts para el WebSocket. Vacia (por defecto) = acepta
+# cualquier Host header, necesario mientras el dominio final todavia no
+# esta configurado (o se prueba contra la URL temporal del hosting).
+# Una vez el dominio este en produccion, se puede endurecer con algo como:
+#   allowedHosts = ["elplaybooknfl.com", "www.elplaybooknfl.com"]
+# pero solo cuando SOLO se vaya a acceder por esos dominios (romperia el
+# acceso por la URL interna del hosting o por localhost).
+allowedHosts = []
+
+# En un contenedor de produccion no hay nadie editando archivos en vivo;
+# el Dockerfile desactiva el watcher por variable de entorno para ahorrar
+# CPU/inotify. En local se mantiene "auto" (autorecarga al guardar).
+fileWatcherType = "auto"
+
+[client]
+# No exponer tipo de excepcion, mensaje completo ni traceback a
+# visitantes ante un error no controlado. El detalle completo sigue
+# imprimiendose en los logs del contenedor para depurar.
+showErrorDetails = "type"
+
+# Oculta las opciones de desarrollador (rerun, clear cache, deploy) del
+# menu superior para cualquier visitante del sitio publico. El menu ya
+# esta oculto visualmente por CSS; esto ademas desactiva la funcionalidad.
+toolbarMode = "viewer"

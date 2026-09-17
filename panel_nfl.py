@@ -32,6 +32,7 @@ from analytics.totals import top_performers
 from analytics.utils import headshot_of
 from analytics.weekly import story_of_the_week
 from components import footer, navbar
+from components.head_tags import head_injection_html
 from components.hero import (
     leader_widget_html, matchup_widget_html, news_widget_html, player_widget_html,
 )
@@ -44,16 +45,34 @@ HERO_SLIDE_COUNT = 5
 LOGO_PATH = "logo.png"
 LOGO_B64 = base64.b64encode(open(LOGO_PATH, "rb").read()).decode()
 
-st.set_page_config(page_title="El Playbook NFL", page_icon=LOGO_PATH, layout="wide")
+st.set_page_config(
+    page_title="El Playbook NFL — Estadísticas y análisis de la NFL en español",
+    page_icon=LOGO_PATH, layout="wide")
+
+_head_html = head_injection_html()
+if _head_html:
+    st.markdown(_head_html, unsafe_allow_html=True)
+
 st.markdown(css_block(), unsafe_allow_html=True)
 
 season = navbar.render(LOGO_B64)
 
-pdf = load_season(season)
-teams_df = load_teams()
+# Los datos base (jugadores/equipos/calendario) vienen de nflreadpy, que a su vez
+# descarga de GitHub — si la red o la fuente fallan, mostramos un error claro en
+# vez de dejar caer la app entera con un traceback crudo.
+try:
+    pdf = load_season(season)
+    teams_df = load_teams()
+    sched = load_schedules(season)
+except Exception:
+    st.error(
+        "⚠️ No se han podido cargar los datos de la NFL en este momento. "
+        "Puede ser un problema temporal de conexión con la fuente de datos — "
+        "prueba a recargar la página en unos minutos.")
+    st.stop()
+
 teams = G.team_info(teams_df)
 colors = {a: to_hex(c) for a, (c, _) in teams.items()}
-sched = load_schedules(season)
 season_teams = set(sched.home_team) | set(sched.away_team)
 team_meta = {a: m for a, m in team_meta_table(teams_df, colors).items() if a in season_teams}
 standings = standings_table(sched, team_meta)
@@ -63,7 +82,7 @@ all_teams = sorted(team_meta.keys())
 
 page = st.session_state.get("page", navbar.DEFAULT_PAGE)
 
-pbp = load_pbp(season)
+pbp = load_pbp(season)  # ya devuelve None con gracia si la fuente falla
 pct = None
 if pbp is not None and not pbp.empty:
     eff = team_efficiency_table(pbp).dropna(subset=["off_epa_play", "def_epa_play"])

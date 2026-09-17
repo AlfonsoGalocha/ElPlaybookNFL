@@ -30,7 +30,7 @@ PBP_COLS = [
 ]
 
 
-@st.cache_data(show_spinner="Cargando datos de la NFL...")
+@st.cache_data(show_spinner="Cargando datos de la NFL...", ttl=3600)
 def load_season(season):
     """Stats semanales por jugador (ataque, defensa, kicking, punting), temporada regular."""
     df = nfl.load_player_stats([season]).filter(pl.col("season_type") == "REG")
@@ -48,7 +48,7 @@ def load_teams():
     return nfl.load_teams()
 
 
-@st.cache_data(show_spinner=False)
+@st.cache_data(show_spinner=False, ttl=3600)
 def load_schedules(season):
     """Calendario y resultados de temporada regular."""
     df = nfl.load_schedules([season]).filter(pl.col("game_type") == "REG")
@@ -57,10 +57,18 @@ def load_schedules(season):
 
 @st.cache_data(show_spinner="Cargando jugada a jugada...", ttl=3600)
 def load_pbp(season):
-    """Play-by-play de temporada regular, con solo las columnas que usa la app."""
-    df = nfl.load_pbp([season]).filter(pl.col("season_type") == "REG")
-    cols = [c for c in PBP_COLS if c in df.columns]
-    return df.select(cols).to_pandas()
+    """Play-by-play de temporada regular, con solo las columnas que usa la app.
+
+    Todas las paginas que consumen esto ya estan preparadas para un pbp
+    vacio/None (EPA no disponible, secciones que dependen de el se ocultan),
+    asi que un fallo de red/fuente aqui no debe tumbar la pagina entera.
+    """
+    try:
+        df = nfl.load_pbp([season]).filter(pl.col("season_type") == "REG")
+        cols = [c for c in PBP_COLS if c in df.columns]
+        return df.select(cols).to_pandas()
+    except Exception:
+        return None
 
 
 @st.cache_data(show_spinner=False, ttl=3600)
