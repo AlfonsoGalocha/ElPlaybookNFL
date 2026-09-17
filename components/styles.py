@@ -295,7 +295,13 @@ div[class*="st-key-std_row_"]:hover .std-row {{ border-color:{ACCENT}; }}
 .footer-links {{ display:flex; justify-content:center; gap:22px; flex-wrap:wrap; margin-bottom:1rem; }}
 .footer-links a {{ color:#C9D2DE; text-decoration:none; font-size:.88rem; font-weight:600; transition:color .15s; }}
 .footer-links a:hover {{ color:{ACCENT}; }}
-.footer-meta {{ color:#5C6579; font-size:.78rem; }}
+.footer-meta {{ color:#5C6579; font-size:.78rem; margin-bottom:.9rem; }}
+div[class*="st-key-footer_legal_"] button {{
+    background:transparent !important; border:none !important; box-shadow:none !important;
+    color:#5C6579 !important; font-family:'Inter'; font-size:.76rem !important;
+    font-weight:500 !important; text-transform:none; letter-spacing:0; padding:.15rem !important;
+}}
+div[class*="st-key-footer_legal_"] button:hover {{ color:{ACCENT} !important; transform:none; }}
 
 /* --- Widgets nativos --- */
 div[data-baseweb="select"] > div {{ border-radius:10px !important; }}

@@ -1,2 +1,14 @@
 __pycache__/
 *.pyc
+
+# Entorno
+.env
+.venv/
+venv/
+
+# Sistema / editores
+.DS_Store
+*.log
+
+# Streamlit
+.streamlit/secrets.toml
