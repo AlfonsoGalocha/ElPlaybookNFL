@@ -1,9 +1,8 @@
-"""components/hero.py — hero superior estatico (2 columnas: titular + widget dinamico) y
-tarjeta de noticias de un equipo.
-
-El widget de la derecha muestra, por orden de prioridad segun los datos disponibles: el
-Partido de la Semana (Duelo Clave), el lider de la clasificacion, o la ultima noticia — nunca
-texto inventado, solo lo que ya calculan analytics.games/analytics.matchups/analytics.standings.
+"""components/hero.py — piezas HTML de las diapositivas del hero slider (badge + widget
+dinamico) y tarjeta de noticias de un equipo. panel_nfl.py controla el slide activo via
+st.session_state y arma cada diapositiva con estas piezas; aqui solo vive el marcado, sin
+logica de negocio — cada widget muestra unicamente datos ya calculados por
+analytics.games/analytics.matchups/analytics.standings/analytics.totals, nunca texto inventado.
 """
 
 
@@ -31,6 +30,25 @@ def leader_widget_html(tag, team_name, logo, record):
         f'<div><div class="hw-leader-name">{team_name}</div>'
         f'<div class="hw-leader-record">{record}</div></div>'
         f'</div></div>'
+    )
+
+
+def player_widget_html(tag, name, headshot, team, position, tiles):
+    """tiles: lista de (etiqueta, valor) — normalmente G._tiles(...) recortada a 2-3 stats."""
+    photo = f'<img class="hw-player-photo" src="{headshot}"/>' if headshot else ""
+    stats_html = "".join(
+        f'<div class="hw-stat"><div class="hw-stat-value">{val}</div>'
+        f'<div class="hw-stat-label">{lbl}</div></div>'
+        for lbl, val in tiles
+    )
+    return (
+        f'<div class="hero-widget-card hero-widget-player">'
+        f'<div class="hw-tag">{tag}</div>'
+        f'<div class="hw-player-row">{photo}'
+        f'<div><div class="hw-player-name">{name}</div>'
+        f'<div class="hw-player-meta">{position} · {team}</div></div></div>'
+        f'<div class="hw-stat-row">{stats_html}</div>'
+        f'</div>'
     )
 
 

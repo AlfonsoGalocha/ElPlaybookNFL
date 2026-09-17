@@ -35,6 +35,10 @@ STATS = {
     "receiving_yards": ("receiving_yards", "YARDAS DE RECEPCION",   "yds", 0),
     "receiving_tds":   ("receiving_tds",   "TDs DE RECEPCION",      "TD",  0),
     "passing_epa":     ("passing_epa",     "EPA DE PASE (avanzada)", "EPA", 1),
+    "tackles":         ("tackles",         "TACLEOS (DEFENSA)",     "",    0),
+    "def_sacks":       ("def_sacks",       "SACKS (DEFENSA)",       "",    1),
+    "def_interceptions": ("def_interceptions", "INTERCEPCIONES (DEFENSA)", "", 0),
+    "def_tackles_for_loss": ("def_tackles_for_loss", "TACKLES PARA PERDIDA", "", 0),
 }
 
 

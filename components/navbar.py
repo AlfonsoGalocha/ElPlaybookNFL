@@ -1,21 +1,23 @@
-"""components/navbar.py — cabecera con marca, navegacion principal, menu de herramientas
-(st.popover) y selector de temporada, todo en una sola fila."""
+"""components/navbar.py — cabecera con marca, navegacion principal (5 pestañas fijas), menu
+de herramientas (st.popover), enlace a TikTok y selector de temporada, todo en una sola fila."""
 
 import streamlit as st
 
+TIKTOK_URL = "https://www.tiktok.com/@elplaybook_nfl"
+
 PAGES_PRIMARY = [
     ("home", "🏠 Inicio"),
-    ("equipos", "🏟️ Equipos"),
-    ("clasificacion", "📋 Clasificación"),
+    ("clasificacion", "📊 Clasificación"),
     ("rankings", "🏆 Rankings"),
-    ("jugadores", "👤 Jugadores"),
+    ("matchups", "⚔️ Matchups"),
+    ("laboratorio", "🧪 Laboratorio"),
 ]
 
 PAGES_TOOLS = [
     ("weekly", "📰 Weekly"),
-    ("laboratorio", "🔬 Laboratorio"),
+    ("equipos", "🏟️ Equipos"),
+    ("jugadores", "👤 Jugadores"),
     ("tendencias", "📈 Tendencias"),
-    ("matchups", "⚔️ Matchups"),
     ("partido", "🏈 Partido"),
     ("comparar", "📊 Comparar"),
     ("football_iq", "🎓 Football IQ"),
@@ -42,8 +44,9 @@ def _nav_row(items):
 def _tools_menu():
     current = st.session_state.page
     active_label = next((label for key, label in PAGES_TOOLS if key == current), None)
-    trigger = active_label or "🛠️ Herramientas / Análisis"
+    trigger = active_label or "🛠️ Más"
     with st.popover(trigger, use_container_width=True):
+        st.caption("🛠️ Herramientas y análisis")
         for key, label in PAGES_TOOLS:
             active = current == key
             if st.button(label, key=f"nav_tool_{key}", use_container_width=True,
@@ -53,12 +56,13 @@ def _tools_menu():
 
 
 def render(logo_b64):
-    """Dibuja la navbar (marca + navegacion principal + herramientas + temporada) en una fila
-    y devuelve la temporada elegida."""
+    """Dibuja la navbar (marca + 5 pestañas principales + herramientas + TikTok + temporada)
+    en una sola fila y devuelve la temporada elegida."""
     if "page" not in st.session_state:
         st.session_state.page = DEFAULT_PAGE
 
-    nav_l, nav_c, nav_t, nav_r = st.columns([2.0, 5.0, 1.9, 1.0], vertical_alignment="center")
+    nav_l, nav_c, nav_t, nav_tt, nav_r = st.columns(
+        [1.9, 5.9, 0.85, 0.4, 0.85], vertical_alignment="center")
     with nav_l:
         st.markdown(
             f'<div class="nav-brand"><img src="data:image/png;base64,{logo_b64}"/>'
@@ -67,6 +71,8 @@ def render(logo_b64):
         _nav_row(PAGES_PRIMARY)
     with nav_t:
         _tools_menu()
+    with nav_tt:
+        st.link_button("🎵", TIKTOK_URL, use_container_width=True, help="Síguenos en TikTok")
     with nav_r:
         season = st.selectbox("Temporada", SEASON_RANGE, index=0, label_visibility="collapsed")
 

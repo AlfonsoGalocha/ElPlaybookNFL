@@ -34,7 +34,12 @@ PBP_COLS = [
 def load_season(season):
     """Stats semanales por jugador (ataque, defensa, kicking, punting), temporada regular."""
     df = nfl.load_player_stats([season]).filter(pl.col("season_type") == "REG")
-    return df.to_pandas()
+    pdf = df.to_pandas()
+    # Tacleos totales (solo + asistidos): columna derivada de uso frecuente
+    # (Rankings, fichas de jugador...), se calcula una sola vez aqui.
+    if "def_tackles_solo" in pdf.columns and "def_tackles_with_assist" in pdf.columns:
+        pdf["tackles"] = pdf["def_tackles_solo"].fillna(0) + pdf["def_tackles_with_assist"].fillna(0)
+    return pdf
 
 
 @st.cache_resource
