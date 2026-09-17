@@ -117,193 +117,190 @@ if page == "weekly" and played_week is not None and pct is not None:
         weekly_week = played_week
         _g, weekly_duel = fg
 
-# --- Slide 1: Highlights de la jornada (mayor cambio de EPA/jugada semana a semana) ---
-story = (story_of_the_week(pbp, played_week, team_meta)
-         if pbp is not None and not pbp.empty and played_week else None)
-if story:
-    verbo = "mejoró" if story["delta"] > 0 else "cayó"
+if page == "home":
+    # --- Slide 1: Highlights de la jornada (mayor cambio de EPA/jugada semana a semana) ---
+    story = (story_of_the_week(pbp, played_week, team_meta)
+             if pbp is not None and not pbp.empty and played_week else None)
     slide_highlights = {
-        "badge": "🎬 HIGHLIGHTS DE LA JORNADA",
-        "headline": f"{story['team_name'].upper()} {verbo.upper()} ESTA SEMANA",
-        "sub": (f"EPA/jugada ofensivo: de {story['prev_epa']:+.2f} (semana {story['prev_week']}) a "
-                f"{story['cur_epa']:+.2f} (semana {story['cur_week']}) — un cambio de {story['delta']:+.2f}."),
-        "widget": None, "cta": ("Ver El Playbook Weekly →", "weekly", {}),
-        "image": hero_image_b64("highlights"),
-        "link": {"type": "external", "url": TIKTOK_URL},
-    }
-else:
-    slide_highlights = {
-        "badge": "🎬 HIGHLIGHTS DE LA JORNADA",
-        "headline": "REUNIENDO LOS DATOS DE LA JORNADA",
-        "sub": "En cuanto haya suficientes jornadas jugadas, aquí verás el mayor cambio de "
-               "rendimiento de la semana.",
-        "widget": None, "cta": None,
+        "badge": "🎬 HIGHLIGHTS DE LA JORNADA", "headline": "", "sub": "",
+        "widget": None,
+        "cta": ("Ver El Playbook Weekly →", "weekly", {}) if story else None,
         "image": hero_image_b64("highlights"),
         "link": {"type": "external", "url": TIKTOK_URL},
     }
 
-# --- Slide 2: General (con el podio de los 3 primeros de la clasificacion) ---
-top3_teams = []
-for i, row in enumerate(standings.head(3).itertuples(), start=1):
-    m = team_meta[row.team]
-    top3_teams.append({
-        "rank": i, "logo": m["logo"], "name": m["name"],
-        "record": f"{int(row.W)}-{int(row.L)}-{int(row.T)}",
-    })
+    # --- Slide 2: General (con el podio de los 3 primeros de la clasificacion) ---
+    top3_teams = []
+    for i, row in enumerate(standings.head(3).itertuples(), start=1):
+        m = team_meta[row.team]
+        top3_teams.append({
+            "rank": i, "logo": m["logo"], "name": m["name"],
+            "record": f"{int(row.W)}-{int(row.L)}-{int(row.T)}",
+        })
 
-slide_general = {
-    "badge": "🏈 NFL · ÚLTIMA HORA",
-    "headline": "RANKINGS, CLASIFICACIÓN Y EQUIPOS EN UN SOLO LUGAR",
-    "sub": "Entiende la NFL de verdad: clasificación en vivo, análisis de cada equipo y las "
-           "estadísticas que importan, todo en un solo lugar.",
-    "widget": None, "cta": ("Ver la clasificación completa →", "clasificacion", {}),
-    "graphic": top_teams_widget_html(top3_teams) if top3_teams else None,
-    "link": {"type": "internal", "page": "clasificacion", "extra": {}},
-}
-
-# --- Slide 3: Mejor jugador de la jornada (MVP) ---
-mvp_widget, mvp_name = None, None
-if played_week is not None:
-    top = top_performers(pdf, played_week, n=1)
-    if top is not None and not top.empty:
-        row = top.iloc[0]
-        p = pdf[(pdf.player_display_name == row.player_display_name) & (pdf.week == played_week)]
-        tiles = G._tiles(row.position, G.player_totals(p))[:3]
-        mvp_widget = player_widget_html("🥇 MVP DE LA JORNADA", row.player_display_name,
-                                         headshot_of(pdf, row.player_display_name),
-                                         row.team, row.position or "", tiles)
-        mvp_name = row.player_display_name
-
-mvp_image = hero_image_b64("mvp")
-mvp_link_extra = {"sel_player": mvp_name} if mvp_name else {}
-if mvp_widget:
-    slide_mvp = {
-        "badge": "🥇 MEJOR JUGADOR DE LA JORNADA", "headline": mvp_name.upper(),
-        "sub": f"La actuación más destacada de la semana {played_week}, según producción real "
-               "(touchdowns y yardas).",
-        "widget": mvp_widget,
-        "cta": ("Ver ficha completa →", "jugadores", {"sel_player": mvp_name}),
-        "image": mvp_image,
-        "link": {"type": "internal", "page": "jugadores", "extra": mvp_link_extra},
-    }
-else:
-    slide_mvp = {
-        "badge": "🥇 MEJOR JUGADOR DE LA JORNADA", "headline": "TODAVÍA SIN DATOS DE ESTA JORNADA",
-        "sub": "En cuanto se jueguen partidos, aquí aparecerá el jugador con más producción de la semana.",
-        "widget": None, "cta": None, "image": mvp_image,
-        "link": {"type": "internal", "page": "jugadores", "extra": mvp_link_extra},
+    slide_general = {
+        "badge": "🏈 NFL · ÚLTIMA HORA",
+        "headline": "RANKINGS, CLASIFICACIÓN Y EQUIPOS EN UN SOLO LUGAR",
+        "sub": "Entiende la NFL de verdad: clasificación en vivo, análisis de cada equipo y las "
+               "estadísticas que importan, todo en un solo lugar.",
+        "widget": None, "cta": ("Ver la clasificación completa →", "clasificacion", {}),
+        "graphic": top_teams_widget_html(top3_teams) if top3_teams else None,
+        "link": {"type": "internal", "page": "clasificacion", "extra": {}},
     }
 
-# --- Slide 4: Proximo partido clave (Duelo Clave) > lider de la clasificacion > noticia ---
-big_game_widget, big_game_badge, big_game_headline, big_game_sub, big_game_cta = (None,) * 5
-big_game_link = None
-if pct is not None and upcoming_week is not None:
-    week_games = sched[sched.week == upcoming_week]
-    if not week_games.empty:
-        fg = featured_game(week_games, pct)
-        if fg:
-            g, _d = fg
-            away = {"abbr": g.away_team, "name": team_meta[g.away_team]["name"],
-                    "logo": team_meta[g.away_team]["logo"]}
-            home = {"abbr": g.home_team, "name": team_meta[g.home_team]["name"],
-                    "logo": team_meta[g.home_team]["logo"]}
-            big_game_widget = matchup_widget_html("🔥 DUELO CLAVE", upcoming_week, away, home)
-            big_game_badge = "🏈 PRÓXIMO PARTIDO CLAVE"
-            big_game_headline = f"{away['abbr']} @ {home['abbr']} · SEMANA {upcoming_week}"
-            big_game_sub = "El emparejamiento con mayor brecha de percentil de EPA/jugada de la próxima jornada."
-            big_game_cta = ("Ver el matchup completo →", "matchups", {})
-            big_game_link = {"type": "internal", "page": "matchups", "extra": {}}
+    # --- Slide 3: Mejor jugador de la jornada (MVP) ---
+    mvp_widget, mvp_name = None, None
+    if played_week is not None:
+        top = top_performers(pdf, played_week, n=1)
+        if top is not None and not top.empty:
+            row = top.iloc[0]
+            p = pdf[(pdf.player_display_name == row.player_display_name) & (pdf.week == played_week)]
+            tiles = G._tiles(row.position, G.player_totals(p))[:3]
+            mvp_widget = player_widget_html("🥇 MVP DE LA JORNADA", row.player_display_name,
+                                             headshot_of(pdf, row.player_display_name),
+                                             row.team, row.position or "", tiles)
+            mvp_name = row.player_display_name
 
-if big_game_widget is None and not standings.empty:
-    leader = standings.iloc[0]
-    lmeta = team_meta[leader.team]
-    record = f"{int(leader.W)}-{int(leader.L)}-{int(leader.T)} · {leader.PCT:.3f} PCT"
-    big_game_widget = leader_widget_html("🏆 LÍDER DE LA CLASIFICACIÓN", lmeta["name"], lmeta["logo"], record)
-    big_game_badge, big_game_headline = "🏆 LÍDER DE LA CLASIFICACIÓN", lmeta["name"].upper()
-    big_game_sub = "Todavía no hay suficiente jugada a jugada esta temporada — de momento, quién manda en la clasificación."
-    big_game_cta = ("Ver la clasificación completa →", "clasificacion", {})
-    big_game_link = {"type": "internal", "page": "clasificacion", "extra": {}}
+    mvp_image = hero_image_b64("mvp")
+    mvp_link_extra = {"sel_player": mvp_name} if mvp_name else {}
+    if mvp_widget:
+        slide_mvp = {
+            "badge": "🥇 MEJOR JUGADOR DE LA JORNADA", "headline": mvp_name.upper(),
+            "sub": f"La actuación más destacada de la semana {played_week}, según producción real "
+                   "(touchdowns y yardas).",
+            "widget": mvp_widget,
+            "cta": ("Ver ficha completa →", "jugadores", {"sel_player": mvp_name}),
+            "image": mvp_image,
+            "link": {"type": "internal", "page": "jugadores", "extra": mvp_link_extra},
+        }
+    else:
+        slide_mvp = {
+            "badge": "🥇 MEJOR JUGADOR DE LA JORNADA", "headline": "TODAVÍA SIN DATOS DE ESTA JORNADA",
+            "sub": "En cuanto se jueguen partidos, aquí aparecerá el jugador con más producción de la semana.",
+            "widget": None, "cta": None, "image": mvp_image,
+            "link": {"type": "internal", "page": "jugadores", "extra": mvp_link_extra},
+        }
 
-if big_game_widget is None:
-    news = get_news()
-    title, link = news[0] if news else ("Bienvenido a El Playbook NFL", "#")
-    big_game_widget = news_widget_html("📰 ÚLTIMA HORA", title, link)
-    big_game_badge, big_game_headline = "📰 ÚLTIMA HORA", "MANTENTE AL DÍA"
-    big_game_sub = "Todavía no hay suficientes datos de la temporada — aquí tienes la última noticia."
-    # el propio widget ya es un enlace (news_widget_html) — no lo envolvemos otra vez.
+    # --- Slide 4: Proximo partido clave (Duelo Clave) > lider de la clasificacion > noticia ---
+    big_game_widget, big_game_badge, big_game_headline, big_game_sub, big_game_cta = (None,) * 5
+    big_game_link = None
+    if pct is not None and upcoming_week is not None:
+        week_games = sched[sched.week == upcoming_week]
+        if not week_games.empty:
+            fg = featured_game(week_games, pct)
+            if fg:
+                g, _d = fg
+                away = {"abbr": g.away_team, "name": team_meta[g.away_team]["name"],
+                        "logo": team_meta[g.away_team]["logo"]}
+                home = {"abbr": g.home_team, "name": team_meta[g.home_team]["name"],
+                        "logo": team_meta[g.home_team]["logo"]}
+                big_game_widget = matchup_widget_html("🔥 DUELO CLAVE", upcoming_week, away, home)
+                big_game_badge = "🏈 PRÓXIMO PARTIDO CLAVE"
+                big_game_headline = f"{away['abbr']} @ {home['abbr']} · SEMANA {upcoming_week}"
+                big_game_sub = "El emparejamiento con mayor brecha de percentil de EPA/jugada de la próxima jornada."
+                big_game_cta = ("Ver el matchup completo →", "matchups", {})
+                big_game_link = {"type": "internal", "page": "matchups", "extra": {}}
 
-slide_big_game = {
-    "badge": big_game_badge, "headline": big_game_headline, "sub": big_game_sub,
-    "widget": big_game_widget, "cta": big_game_cta, "image": hero_image_b64("big_game"),
-    "link": big_game_link,
-}
+    if big_game_widget is None and not standings.empty:
+        leader = standings.iloc[0]
+        lmeta = team_meta[leader.team]
+        record = f"{int(leader.W)}-{int(leader.L)}-{int(leader.T)} · {leader.PCT:.3f} PCT"
+        big_game_widget = leader_widget_html("🏆 LÍDER DE LA CLASIFICACIÓN", lmeta["name"], lmeta["logo"], record)
+        big_game_badge, big_game_headline = "🏆 LÍDER DE LA CLASIFICACIÓN", lmeta["name"].upper()
+        big_game_sub = "Todavía no hay suficiente jugada a jugada esta temporada — de momento, quién manda en la clasificación."
+        big_game_cta = ("Ver la clasificación completa →", "clasificacion", {})
+        big_game_link = {"type": "internal", "page": "clasificacion", "extra": {}}
 
-# --- Slide 5: Trivia ---
-slide_trivia = {
-    "badge": "🧠 APRENDE NFL",
-    "headline": "¿CUÁNTO SABES DE FÚTBOL AMERICANO?",
-    "sub": "Pon a prueba lo que sabes con nuestro Quiz interactivo, desde nivel Rookie hasta Avanzado.",
-    "widget": None, "cta": ("Empezar el Quiz →", "quiz", {}), "image": hero_image_b64("trivia"),
-    "link": {"type": "internal", "page": "quiz", "extra": {}},
-}
+    if big_game_widget is None:
+        news = get_news()
+        title, link = news[0] if news else ("Bienvenido a El Playbook NFL", "#")
+        big_game_widget = news_widget_html("📰 ÚLTIMA HORA", title, link)
+        big_game_badge, big_game_headline = "📰 ÚLTIMA HORA", "MANTENTE AL DÍA"
+        big_game_sub = "Todavía no hay suficientes datos de la temporada — aquí tienes la última noticia."
+        # el propio widget ya es un enlace (news_widget_html) — no lo envolvemos otra vez.
 
-hero_slides = [slide_highlights, slide_general, slide_mvp, slide_big_game, slide_trivia]
+    slide_big_game = {
+        "badge": big_game_badge, "headline": big_game_headline, "sub": big_game_sub,
+        "widget": big_game_widget, "cta": big_game_cta, "image": hero_image_b64("big_game"),
+        "link": big_game_link,
+    }
 
-if "hero_slide" not in st.session_state:
-    st.session_state.hero_slide = 0
-hero_idx = st.session_state.hero_slide % HERO_SLIDE_COUNT
-slide = hero_slides[hero_idx]
+    # --- Slide 5: Trivia ---
+    slide_trivia = {
+        "badge": "🧠 APRENDE NFL",
+        "headline": "¿CUÁNTO SABES DE FÚTBOL AMERICANO?",
+        "sub": "Pon a prueba lo que sabes con nuestro Quiz interactivo, desde nivel Rookie hasta Avanzado.",
+        "widget": None, "cta": ("Empezar el Quiz →", "quiz", {}), "image": hero_image_b64("trivia"),
+        "link": {"type": "internal", "page": "quiz", "extra": {}},
+    }
 
-with st.container(key="hero_banner"):
-    arrow_l, hero_content, arrow_r = st.columns([0.6, 11, 0.6], vertical_alignment="center")
-    with arrow_l:
-        if st.button("‹", key="hero_prev", use_container_width=True):
-            st.session_state.hero_slide = (hero_idx - 1) % HERO_SLIDE_COUNT
-            st.rerun()
-    with hero_content:
-        inner_html = ""
+    hero_slides = [slide_highlights, slide_general, slide_mvp, slide_big_game, slide_trivia]
+
+    if "hero_slide" not in st.session_state:
+        st.session_state.hero_slide = 0
+    hero_idx = st.session_state.hero_slide % HERO_SLIDE_COUNT
+    slide = hero_slides[hero_idx]
+
+    with st.container(key="hero_banner"):
         if slide.get("image"):
-            inner_html += f'<div class="hero-image-wrap"><img class="hero-image" src="{slide["image"]}"/></div>'
-        if slide.get("graphic"):
-            inner_html += f'<div class="hero-top3-wrap">{slide["graphic"]}</div>'
-        inner_html += (
-            f'<div class="hero-slide-body">'
-            f'<div class="hero-badge">{slide["badge"]}</div>'
-            f'<div class="hero-headline">{slide["headline"]}</div>'
-            f'<div class="hero-sub">{slide["sub"]}</div>'
-            f'</div>')
-        if slide["widget"]:
-            inner_html += f'<div class="hero-widget-wrap">{slide["widget"]}</div>'
-
-        link = slide.get("link")
-        if link and link["type"] == "external":
+            # Fondo a sangre de toda la tarjeta (no una imagen-caja dentro de la caja):
+            # background-image en el propio contenedor, no un <img> absoluto — un <img>
+            # con position:absolute;height:100% no puede calcular su alto porque el
+            # contenedor solo tiene min-height (auto), no un alto explicito.
             st.markdown(
-                f'<a class="hero-slide-link" href="{link["url"]}" target="_blank" rel="noopener">'
-                f'{inner_html}</a>', unsafe_allow_html=True)
-        elif link and link["type"] == "internal":
-            with st.container(key=f"hero_click_{hero_idx}"):
+                f'<style>div[class*="st-key-hero_banner"] {{ background-image: '
+                f'linear-gradient(180deg, rgba(8,10,16,.15) 0%, rgba(8,10,16,.6) 65%, rgba(8,10,16,.88) 100%), '
+                f'url(\'{slide["image"]}\'); }}</style>',
+                unsafe_allow_html=True)
+
+        arrow_l, hero_content, arrow_r = st.columns([0.6, 11, 0.6], vertical_alignment="center")
+        with arrow_l:
+            if st.button("‹", key="hero_prev", use_container_width=True):
+                st.session_state.hero_slide = (hero_idx - 1) % HERO_SLIDE_COUNT
+                st.rerun()
+        with hero_content:
+            inner_html = ""
+            if slide.get("graphic"):
+                inner_html += f'<div class="hero-top3-wrap">{slide["graphic"]}</div>'
+            inner_html += '<div class="hero-slide-body">'
+            inner_html += f'<div class="hero-badge">{slide["badge"]}</div>'
+            if slide.get("headline"):
+                inner_html += f'<div class="hero-headline">{slide["headline"]}</div>'
+            if slide.get("sub"):
+                inner_html += f'<div class="hero-sub">{slide["sub"]}</div>'
+            inner_html += '</div>'
+            if slide["widget"]:
+                inner_html += f'<div class="hero-widget-wrap">{slide["widget"]}</div>'
+
+            link = slide.get("link")
+            if link and link["type"] == "external":
+                st.markdown(
+                    f'<a class="hero-slide-link" href="{link["url"]}" target="_blank" rel="noopener">'
+                    f'{inner_html}</a>', unsafe_allow_html=True)
+            elif link and link["type"] == "internal":
+                with st.container(key=f"hero_click_{hero_idx}"):
+                    st.markdown(inner_html, unsafe_allow_html=True)
+                    if st.button(" ", key=f"hero_ovl_{hero_idx}"):
+                        go_to(link["page"], **link.get("extra", {}))
+            else:
                 st.markdown(inner_html, unsafe_allow_html=True)
-                if st.button(" ", key=f"hero_ovl_{hero_idx}"):
-                    go_to(link["page"], **link.get("extra", {}))
-        else:
-            st.markdown(inner_html, unsafe_allow_html=True)
 
-        if slide["cta"]:
-            cta_label, cta_page, cta_extra = slide["cta"]
-            cta_l, cta_c, cta_r = st.columns([1, 1.3, 1])
-            with cta_c:
-                if st.button(cta_label, type="primary", key=f"hero_cta_{hero_idx}",
-                             use_container_width=True):
-                    go_to(cta_page, **cta_extra)
-    with arrow_r:
-        if st.button("›", key="hero_next", use_container_width=True):
-            st.session_state.hero_slide = (hero_idx + 1) % HERO_SLIDE_COUNT
-            st.rerun()
+            if slide["cta"]:
+                cta_label, cta_page, cta_extra = slide["cta"]
+                cta_l, cta_c, cta_r = st.columns([1, 1.3, 1])
+                with cta_c:
+                    if st.button(cta_label, type="primary", key=f"hero_cta_{hero_idx}",
+                                 use_container_width=True):
+                        go_to(cta_page, **cta_extra)
+        with arrow_r:
+            if st.button("›", key="hero_next", use_container_width=True):
+                st.session_state.hero_slide = (hero_idx + 1) % HERO_SLIDE_COUNT
+                st.rerun()
 
-    dots = "".join(
-        f'<span class="hero-dot{" active" if i == hero_idx else ""}"></span>'
-        for i in range(HERO_SLIDE_COUNT))
-    st.markdown(f'<div class="hero-dots">{dots}</div>', unsafe_allow_html=True)
+        dots = "".join(
+            f'<span class="hero-dot{" active" if i == hero_idx else ""}"></span>'
+            for i in range(HERO_SLIDE_COUNT))
+        st.markdown(f'<div class="hero-dots">{dots}</div>', unsafe_allow_html=True)
 
 ctx = SimpleNamespace(
     season=season, pdf=pdf, teams_df=teams_df, teams=teams, colors=colors,
