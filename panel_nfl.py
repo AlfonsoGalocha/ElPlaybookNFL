@@ -18,6 +18,7 @@ Lanzar:  streamlit run panel_nfl.py
 """
 
 import base64
+import os
 from types import SimpleNamespace
 
 import streamlit as st
@@ -44,6 +45,21 @@ HERO_SLIDE_COUNT = 5
 
 LOGO_PATH = "logo.png"
 LOGO_B64 = base64.b64encode(open(LOGO_PATH, "rb").read()).decode()
+
+HERO_IMAGES_DIR = "assets/hero"
+_HERO_IMG_EXTS = {".jpg": "jpeg", ".jpeg": "jpeg", ".png": "png", ".webp": "webp"}
+
+
+def hero_image_b64(slide_key):
+    """Busca assets/hero/<slide_key>.(jpg|jpeg|png|webp) y lo devuelve como data URI, o
+    None si todavia no se ha subido ninguna imagen para ese slide (el hero se ve bien sin ella)."""
+    for ext, mime in _HERO_IMG_EXTS.items():
+        path = os.path.join(HERO_IMAGES_DIR, f"{slide_key}{ext}")
+        if os.path.isfile(path):
+            with open(path, "rb") as f:
+                data = base64.b64encode(f.read()).decode()
+            return f"data:image/{mime};base64,{data}"
+    return None
 
 st.set_page_config(
     page_title="El Playbook NFL — Estadísticas y análisis de la NFL en español",
@@ -111,6 +127,7 @@ if story:
         "sub": (f"EPA/jugada ofensivo: de {story['prev_epa']:+.2f} (semana {story['prev_week']}) a "
                 f"{story['cur_epa']:+.2f} (semana {story['cur_week']}) — un cambio de {story['delta']:+.2f}."),
         "widget": None, "cta": ("Ver El Playbook Weekly →", "weekly", {}),
+        "image": hero_image_b64("highlights"),
     }
 else:
     slide_highlights = {
@@ -119,6 +136,7 @@ else:
         "sub": "En cuanto haya suficientes jornadas jugadas, aquí verás el mayor cambio de "
                "rendimiento de la semana.",
         "widget": None, "cta": None,
+        "image": hero_image_b64("highlights"),
     }
 
 # --- Slide 2: General ---
@@ -128,6 +146,7 @@ slide_general = {
     "sub": "Entiende la NFL de verdad: clasificación en vivo, análisis de cada equipo y las "
            "estadísticas que importan, todo en un solo lugar.",
     "widget": None, "cta": ("Ver la clasificación completa →", "clasificacion", {}),
+    "image": hero_image_b64("general"),
 }
 
 # --- Slide 3: Mejor jugador de la jornada (MVP) ---
@@ -143,6 +162,7 @@ if played_week is not None:
                                          row.team, row.position or "", tiles)
         mvp_name = row.player_display_name
 
+mvp_image = hero_image_b64("mvp")
 if mvp_widget:
     slide_mvp = {
         "badge": "🥇 MEJOR JUGADOR DE LA JORNADA", "headline": mvp_name.upper(),
@@ -150,12 +170,13 @@ if mvp_widget:
                "(touchdowns y yardas).",
         "widget": mvp_widget,
         "cta": ("Ver ficha completa →", "jugadores", {"sel_player": mvp_name}),
+        "image": mvp_image,
     }
 else:
     slide_mvp = {
         "badge": "🥇 MEJOR JUGADOR DE LA JORNADA", "headline": "TODAVÍA SIN DATOS DE ESTA JORNADA",
         "sub": "En cuanto se jueguen partidos, aquí aparecerá el jugador con más producción de la semana.",
-        "widget": None, "cta": None,
+        "widget": None, "cta": None, "image": mvp_image,
     }
 
 # --- Slide 4: Proximo partido clave (Duelo Clave) > lider de la clasificacion > noticia ---
@@ -194,7 +215,7 @@ if big_game_widget is None:
 
 slide_big_game = {
     "badge": big_game_badge, "headline": big_game_headline, "sub": big_game_sub,
-    "widget": big_game_widget, "cta": big_game_cta,
+    "widget": big_game_widget, "cta": big_game_cta, "image": hero_image_b64("big_game"),
 }
 
 # --- Slide 5: Trivia ---
@@ -202,7 +223,7 @@ slide_trivia = {
     "badge": "🧠 APRENDE NFL",
     "headline": "¿CUÁNTO SABES DE FÚTBOL AMERICANO?",
     "sub": "Pon a prueba lo que sabes con nuestro Quiz interactivo, desde nivel Rookie hasta Avanzado.",
-    "widget": None, "cta": ("Empezar el Quiz →", "quiz", {}),
+    "widget": None, "cta": ("Empezar el Quiz →", "quiz", {}), "image": hero_image_b64("trivia"),
 }
 
 hero_slides = [slide_highlights, slide_general, slide_mvp, slide_big_game, slide_trivia]
@@ -219,6 +240,10 @@ with st.container(key="hero_banner"):
             st.session_state.hero_slide = (hero_idx - 1) % HERO_SLIDE_COUNT
             st.rerun()
     with hero_content:
+        if slide.get("image"):
+            st.markdown(
+                f'<div class="hero-image-wrap"><img class="hero-image" src="{slide["image"]}"/></div>',
+                unsafe_allow_html=True)
         st.markdown(
             f'<div class="hero-slide-body">'
             f'<div class="hero-badge">{slide["badge"]}</div>'

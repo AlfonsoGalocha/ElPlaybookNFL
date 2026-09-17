@@ -3,13 +3,12 @@
 import streamlit as st
 
 import nfl_graficos as G
-from components.navbar import go_to
+from components.navbar import TIKTOK_URL, go_to
 
 REDES = {
-    "TikTok":    "https://www.tiktok.com/@elplaybooknfl",
+    "TikTok":    TIKTOK_URL,
     "Instagram": "https://www.instagram.com/elplaybooknfl",
-    "YouTube":   "https://www.youtube.com/@elplaybooknfl",
-    "Contacto":  "mailto:elplaybooknfl@gmail.com",
+    "Contacto":  TIKTOK_URL,
 }
 
 LEGAL_LINKS = [
