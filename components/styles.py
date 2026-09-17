@@ -75,14 +75,15 @@ div[data-testid="stPopoverBody"], div[data-baseweb="popover"] div[role="tooltip"
 /* --- Hero slider (1 diapositiva centrada + flechas + puntos) --- */
 @keyframes heroFade {{ from {{ opacity:0; transform:translateY(6px); }} to {{ opacity:1; transform:translateY(0); }} }}
 div[class*="st-key-hero_banner"] {{
+    position:relative; overflow:hidden; min-height:340px; display:flex; flex-direction:column;
+    justify-content:center;
     background:linear-gradient(135deg,{ACCENT}26,var(--bg-card) 55%);
+    background-size:cover; background-position:center; background-repeat:no-repeat;
     border:1px solid rgba(255,255,255,.08); border-radius:20px; padding:34px 26px 30px; margin:1.1rem 0 1.4rem;
+    transition:background-image .18s ease;
 }}
 div[class*="st-key-hero_banner"] > div {{ background:transparent; border:none; padding:0; margin:0; }}
 .hero-slide-body {{ text-align:center; animation:heroFade 220ms var(--ease-out) both; }}
-.hero-image-wrap {{ max-width:100%; margin:0 auto 18px; animation:heroFade 220ms var(--ease-out) both; }}
-.hero-image {{ width:100%; height:320px; max-height:40vh; object-fit:cover; border-radius:14px; display:block;
-    box-shadow:0 10px 26px rgba(0,0,0,.4); transition:filter .18s ease; }}
 
 /* Podio de los 3 primeros de la clasificacion (slide "General") — mismo ancho que la imagen */
 .hero-top3-wrap {{ max-width:100%; margin:0 auto 18px; animation:heroFade 220ms var(--ease-out) both; }}
@@ -97,7 +98,7 @@ div[class*="st-key-hero_banner"] > div {{ background:transparent; border:none; p
 
 /* Slide entero como enlace (highlights -> TikTok, o el overlay interno de abajo) */
 a.hero-slide-link {{ display:block; text-decoration:none; color:inherit; cursor:pointer; }}
-a.hero-slide-link:hover .hero-image {{ filter:brightness(1.08); }}
+div[class*="st-key-hero_banner"]:hover {{ filter:brightness(1.05); }}
 
 .hero-badge {{ font-family:'Oswald'; font-size:.72rem; font-weight:700; letter-spacing:2px; color:#fff;
     background:rgba(0,0,0,.35); display:inline-block; padding:4px 12px; border-radius:20px; margin-bottom:14px;
@@ -165,14 +166,12 @@ div[class*="st-key-hero_ovl_"] button {{
     background:transparent !important; cursor:pointer; box-shadow:none !important;
     transform:none !important;
 }}
-div[class*="st-key-hero_click_"]:hover .hero-image {{ filter:brightness(1.08); }}
 div[class*="st-key-hero_click_"]:hover .hero-top3-team {{ border-color:{ACCENT}; }}
 
 @media (max-width:900px) {{
-  div[class*="st-key-hero_banner"] {{ padding:24px 16px 22px; }}
+  div[class*="st-key-hero_banner"] {{ padding:24px 16px 22px; min-height:260px; }}
   .hero-headline {{ font-size:1.9rem; }}
   .hero-sub {{ max-width:100%; }}
-  .hero-image {{ height:190px; }}
   .hero-top3-row {{ flex-direction:column; }}
   .hero-top3-team img {{ width:60px; height:60px; }}
 }}
