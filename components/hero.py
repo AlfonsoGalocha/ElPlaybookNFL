@@ -62,6 +62,21 @@ def news_widget_html(tag, title, link):
     )
 
 
+def top_teams_widget_html(teams):
+    """teams: lista de hasta 3 dicts con 'rank', 'logo', 'name' y 'record' — los lideres
+    actuales de la clasificacion, a tamaño grande (mismo ancho que la imagen de un slide)."""
+    cards = "".join(
+        f'<div class="hero-top3-team">'
+        f'<div class="hero-top3-rank">#{t["rank"]}</div>'
+        f'<img src="{t["logo"]}"/>'
+        f'<div class="hero-top3-name">{t["name"]}</div>'
+        f'<div class="hero-top3-record">{t["record"]}</div>'
+        f'</div>'
+        for t in teams
+    )
+    return f'<div class="hero-top3-row">{cards}</div>'
+
+
 def team_news_html(meta):
     grad = f"linear-gradient(150deg,{meta['color']}66,#171B24 80%)"
     return (

@@ -80,9 +80,25 @@ div[class*="st-key-hero_banner"] {{
 }}
 div[class*="st-key-hero_banner"] > div {{ background:transparent; border:none; padding:0; margin:0; }}
 .hero-slide-body {{ text-align:center; animation:heroFade 220ms var(--ease-out) both; }}
-.hero-image-wrap {{ max-width:640px; margin:0 auto 18px; animation:heroFade 220ms var(--ease-out) both; }}
-.hero-image {{ width:100%; max-height:260px; object-fit:cover; border-radius:14px; display:block;
-    box-shadow:0 10px 26px rgba(0,0,0,.4); }}
+.hero-image-wrap {{ max-width:100%; margin:0 auto 18px; animation:heroFade 220ms var(--ease-out) both; }}
+.hero-image {{ width:100%; height:320px; max-height:40vh; object-fit:cover; border-radius:14px; display:block;
+    box-shadow:0 10px 26px rgba(0,0,0,.4); transition:filter .18s ease; }}
+
+/* Podio de los 3 primeros de la clasificacion (slide "General") — mismo ancho que la imagen */
+.hero-top3-wrap {{ max-width:100%; margin:0 auto 18px; animation:heroFade 220ms var(--ease-out) both; }}
+.hero-top3-row {{ display:flex; gap:14px; }}
+.hero-top3-team {{ flex:1; min-width:0; background:rgba(0,0,0,.28); border:1px solid rgba(255,255,255,.10);
+    border-radius:14px; padding:20px 10px; display:flex; flex-direction:column; align-items:center; gap:8px;
+    transition:border-color .18s ease, transform .18s var(--ease-out); }}
+.hero-top3-rank {{ font-family:'Oswald'; font-weight:700; font-size:.78rem; letter-spacing:1px; color:var(--text-amber); }}
+.hero-top3-team img {{ width:88px; height:88px; object-fit:contain; }}
+.hero-top3-name {{ font-family:'Oswald'; font-weight:700; font-size:.92rem; color:#fff; text-align:center; }}
+.hero-top3-record {{ color:var(--text-secondary); font-size:.78rem; }}
+
+/* Slide entero como enlace (highlights -> TikTok, o el overlay interno de abajo) */
+a.hero-slide-link {{ display:block; text-decoration:none; color:inherit; cursor:pointer; }}
+a.hero-slide-link:hover .hero-image {{ filter:brightness(1.08); }}
+
 .hero-badge {{ font-family:'Oswald'; font-size:.72rem; font-weight:700; letter-spacing:2px; color:#fff;
     background:rgba(0,0,0,.35); display:inline-block; padding:4px 12px; border-radius:20px; margin-bottom:14px;
     width:fit-content; }}
@@ -135,11 +151,30 @@ a.hero-widget-card:hover {{ border-color:{ACCENT}; }}
 .hw-stat {{ text-align:center; }}
 .hw-stat-value {{ font-family:'Oswald'; font-weight:700; font-size:1.15rem; color:#fff; }}
 .hw-stat-label {{ color:var(--text-secondary); font-size:.65rem; letter-spacing:.4px; text-transform:uppercase; margin-top:2px; }}
+/* Slides con navegacion interna (jornada, jugador...): la tarjeta entera es HTML y el
+   boton real va superpuesto (transparente) encima, mismo patron que las filas de
+   Clasificacion clicables. */
+div[class*="st-key-hero_click_"] {{ position:relative; cursor:pointer; }}
+div[class*="st-key-hero_ovl_"] {{
+    position:absolute !important; inset:0 !important; width:100% !important; height:100% !important;
+    z-index:2; margin:0 !important;
+}}
+div[class*="st-key-hero_ovl_"] div[data-testid="stButton"] {{ width:100% !important; height:100% !important; }}
+div[class*="st-key-hero_ovl_"] button {{
+    width:100% !important; height:100% !important; opacity:0; padding:0; margin:0; border:none !important;
+    background:transparent !important; cursor:pointer; box-shadow:none !important;
+    transform:none !important;
+}}
+div[class*="st-key-hero_click_"]:hover .hero-image {{ filter:brightness(1.08); }}
+div[class*="st-key-hero_click_"]:hover .hero-top3-team {{ border-color:{ACCENT}; }}
+
 @media (max-width:900px) {{
   div[class*="st-key-hero_banner"] {{ padding:24px 16px 22px; }}
   .hero-headline {{ font-size:1.9rem; }}
   .hero-sub {{ max-width:100%; }}
-  .hero-image {{ max-height:170px; }}
+  .hero-image {{ height:190px; }}
+  .hero-top3-row {{ flex-direction:column; }}
+  .hero-top3-team img {{ width:60px; height:60px; }}
 }}
 
 /* --- Tarjetas de partido (Jornada · horarios en España, grid de 3 columnas) --- */
