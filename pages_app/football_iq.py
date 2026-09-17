@@ -2,6 +2,7 @@
 
 import streamlit as st
 
+from components.tracking import track_football_iq_viewed
 from content.football_iq_data import LEVEL_ORDER, LEVELS
 
 
@@ -19,6 +20,7 @@ def render(ctx):
     st.markdown('<div class="sect-title">Football IQ</div>', unsafe_allow_html=True)
     st.markdown('<div class="sect-sub">Entiende la NFL de verdad, no solo la sigas. Elige tu nivel.</div>',
                 unsafe_allow_html=True)
+    track_football_iq_viewed()
 
     if "iq_level" not in st.session_state:
         st.session_state.iq_level = "rookie"

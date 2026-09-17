@@ -24,3 +24,7 @@ venv/
 # Documentacion de desarrollo (no hace falta dentro de la imagen)
 DEPLOY.md
 README.md
+
+# Tests (solo para desarrollo — no se instala requirements-dev.txt en la imagen)
+tests/
+requirements-dev.txt

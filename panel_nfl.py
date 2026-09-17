@@ -33,13 +33,14 @@ from analytics.totals import top_performers
 from analytics.utils import headshot_of
 from analytics.weekly import story_of_the_week
 from components import footer, navbar
-from components.head_tags import head_injection_html
+from components.head_tags import head_injection_html, inject_head_scripts
 from components.hero import (
     leader_widget_html, matchup_widget_html, news_widget_html, player_widget_html,
     top_teams_widget_html,
 )
 from components.navbar import TIKTOK_URL, go_to
 from components.styles import css_block
+from components.tracking import track_page_view
 from data.loaders import get_news, load_pbp, load_schedules, load_season, load_teams
 
 HERO_SLIDE_COUNT = 5
@@ -69,6 +70,7 @@ st.set_page_config(
 _head_html = head_injection_html()
 if _head_html:
     st.markdown(_head_html, unsafe_allow_html=True)
+inject_head_scripts()
 
 st.markdown(css_block(), unsafe_allow_html=True)
 
@@ -98,6 +100,7 @@ all_names = sorted(pdf.player_display_name.dropna().unique().tolist())
 all_teams = sorted(team_meta.keys())
 
 page = st.session_state.get("page", navbar.DEFAULT_PAGE)
+track_page_view(page, dict(navbar.PAGES).get(page, page))
 
 pbp = load_pbp(season)  # ya devuelve None con gracia si la fuente falla
 pct = None

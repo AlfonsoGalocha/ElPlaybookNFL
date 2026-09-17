@@ -6,6 +6,7 @@ import nfl_graficos as G
 from analytics.totals import team_stat_tiles, totals_table
 from components.hero import team_news_html
 from components.navbar import go_to
+from components.tracking import track_share_result, track_team_viewed
 from share.cards import team_summary_card
 
 
@@ -35,6 +36,7 @@ def render(ctx):
 
     st.markdown("---")
     team = st.session_state.sel_team
+    track_team_viewed(team)
     meta = ctx.team_meta[team]
     std_rows = ctx.standings[ctx.standings.team == team]
     st.markdown(f"""
@@ -56,6 +58,7 @@ def render(ctx):
         if tiles and st.button("Generar imagen", type="primary", key="share_team"):
             with st.spinner("Generando..."):
                 png = team_summary_card(meta["name"], meta, ctx.season, tiles)
+            track_share_result("team")
             st.image(png, width=280)
             st.download_button("⬇️ Descargar PNG", png, file_name=f"equipo_{team}_{ctx.season}.png",
                                mime="image/png")

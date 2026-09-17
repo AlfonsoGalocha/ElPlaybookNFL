@@ -7,6 +7,7 @@ from analytics.efficiency import team_efficiency_table, team_situational_table
 from analytics.explanations import breakdown_insight, epa_breakdown
 from analytics.matchups import duelo_clave, with_percentiles
 from components.explanation import why_expander
+from components.tracking import track_matchup_viewed
 from data.loaders import load_pbp, load_pfr
 
 ACCENT, ACCENT2 = G.ACCENT, G.ACCENT2
@@ -43,6 +44,8 @@ def render(ctx):
     if team_a == team_b:
         st.info("Elige dos equipos distintos para comparar.")
         return
+
+    track_matchup_viewed(team_a, team_b)
 
     pbp = load_pbp(ctx.season)
     if pbp is None or pbp.empty:

@@ -1,0 +1,10 @@
+# requirements-dev.txt — dependencias solo para desarrollo/tests, no para producción.
+#
+# La imagen Docker NO instala esto (solo requirements.txt) — mantiene la imagen de
+# producción ligera. Instálalo en local para poder ejecutar los tests:
+#
+#   pip install -r requirements-dev.txt
+#   pytest
+
+-r requirements.txt
+pytest>=8.0

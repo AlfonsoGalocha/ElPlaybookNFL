@@ -5,6 +5,7 @@ import streamlit as st
 
 import nfl_graficos as G
 from analytics.trends import MIN_WEEKS_FOR_TREND, trend_table, weekly_team_epa, weekly_team_situational
+from components.tracking import track_trend_viewed
 from data.loaders import load_pbp
 
 FG, ACCENT, ACCENT2 = G.FG, G.ACCENT, G.ACCENT2
@@ -33,6 +34,7 @@ def render(ctx):
     st.markdown('<div class="sect-title">Tendencias</div>', unsafe_allow_html=True)
     st.markdown('<div class="sect-sub">Qué ha cambiado entre las primeras y las últimas jornadas, '
                 'siempre con los datos a la vista.</div>', unsafe_allow_html=True)
+    track_trend_viewed()
 
     pbp = load_pbp(ctx.season)
     if pbp is None or pbp.empty:

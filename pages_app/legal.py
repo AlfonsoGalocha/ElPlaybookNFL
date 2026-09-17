@@ -102,6 +102,8 @@ sobre tu visita.
 Puedes bloquear o eliminar las cookies desde la configuración de tu navegador. Bloquear
 las cookies técnicas puede afectar al funcionamiento normal de la aplicación.
 
+{"⚠️ *Las cookies analíticas están configuradas pero todavía no pedimos consentimiento antes de activarlas — falta implementar un banner de consentimiento.*" if env.ANALYTICS_ENABLED else ""}
+
 {PLACEHOLDER}
 """)
 

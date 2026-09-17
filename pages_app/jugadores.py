@@ -15,6 +15,7 @@ from analytics.totals import full_totals_table, headline_stat, player_season
 from analytics.utils import headshot_of, mode
 from components.explanation import why_expander
 from components.stat_context import stat_context_html
+from components.tracking import track_player_viewed, track_share_result
 from data.loaders import load_pbp
 
 FAMOSOS = ["Patrick Mahomes", "Josh Allen", "Lamar Jackson", "Jalen Hurts",
@@ -158,6 +159,7 @@ def render(ctx):
 
     st.markdown("---")
     player = st.session_state.sel_player
+    track_player_viewed(player)
     info = player_season(ctx.pdf, player)
     pos = info["pos"]
     headshot = headshot_of(ctx.pdf, player)
@@ -192,6 +194,7 @@ def render(ctx):
         with st.spinner("Generando tarjeta..."):
             fig = G.make_card(ctx.pdf, ctx.season, player, ctx.teams, modo_key, foto)
             png = G.fig_a_png(fig)
+        track_share_result("player")
         st.image(png, width=340)
         fn = f"tarjeta_{player.lower().replace(' ', '_')}_{ctx.season}.png"
         st.download_button("⬇️ Descargar PNG", png, file_name=fn, mime="image/png")

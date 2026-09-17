@@ -5,6 +5,7 @@ import streamlit as st
 
 import nfl_graficos as G
 from analytics.efficiency import pressure_table, qb_efficiency_table, team_efficiency_table
+from components.tracking import track_laboratory_viewed
 from data.loaders import load_pbp, load_pfr
 
 FG, CARD, ACCENT, ACCENT2 = G.FG, G.CARD, G.ACCENT, G.ACCENT2
@@ -24,6 +25,7 @@ def render(ctx):
     st.markdown('<div class="sect-title">Laboratorio</div>', unsafe_allow_html=True)
     st.markdown('<div class="sect-sub">Eficiencia real de equipos y jugadores, con EPA, success rate '
                 'y presión — no solo estadísticas contables.</div>', unsafe_allow_html=True)
+    track_laboratory_viewed()
 
     pbp = load_pbp(ctx.season)
     if pbp is None or pbp.empty:
