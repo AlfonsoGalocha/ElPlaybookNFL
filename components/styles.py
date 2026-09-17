@@ -38,9 +38,9 @@ h1,h2,h3 {{ font-family:'Oswald', sans-serif; letter-spacing:.5px; color:#fff; }
 
 /* --- Navbar --- */
 .navbar {{ display:flex; align-items:center; gap:14px; padding:.3rem 0 .6rem; }}
-.nav-brand {{ font-family:'Oswald'; font-weight:700; font-size:1.05rem; letter-spacing:.3px; color:#fff; display:flex; align-items:center; gap:.4rem; white-space:nowrap; overflow:hidden; }}
-.nav-brand img {{ height:52px; width:52px; min-width:52px; border-radius:50%; object-fit:cover; box-shadow:0 0 0 2px rgba(255,255,255,.18); }}
-.nav-brand .nfl {{ background:linear-gradient(135deg,{ACCENT},{ACCENT2}); color:#fff; padding:.02rem .35rem; border-radius:6px; font-size:.82rem; }}
+.nav-brand {{ font-family:'Oswald'; font-weight:700; font-size:1.3rem; letter-spacing:.3px; color:#fff; display:flex; align-items:center; gap:.5rem; white-space:nowrap; overflow:hidden; }}
+.nav-brand img {{ height:64px; width:64px; min-width:64px; border-radius:50%; object-fit:cover; box-shadow:0 0 0 2px rgba(255,255,255,.18); }}
+.nav-brand .nfl {{ background:linear-gradient(135deg,{ACCENT},{ACCENT2}); color:#fff; padding:.05rem .4rem; border-radius:6px; font-size:.98rem; }}
 :where(div[data-testid="stHorizontalBlock"] div[data-testid="stButton"] button) {{
     border-radius:999px !important; font-family:'Oswald'; font-size:.78rem; letter-spacing:.2px;
     padding:.4rem .5rem !important; white-space:nowrap; border:1px solid rgba(255,255,255,.10) !important;
@@ -76,10 +76,13 @@ div[data-testid="stPopoverBody"], div[data-baseweb="popover"] div[role="tooltip"
 @keyframes heroFade {{ from {{ opacity:0; transform:translateY(6px); }} to {{ opacity:1; transform:translateY(0); }} }}
 div[class*="st-key-hero_banner"] {{
     background:linear-gradient(135deg,{ACCENT}26,var(--bg-card) 55%);
-    border:1px solid rgba(255,255,255,.08); border-radius:20px; padding:28px 20px 14px; margin:.2rem 0 1.4rem;
+    border:1px solid rgba(255,255,255,.08); border-radius:20px; padding:34px 26px 30px; margin:.2rem 0 1.4rem;
 }}
 div[class*="st-key-hero_banner"] > div {{ background:transparent; border:none; padding:0; margin:0; }}
 .hero-slide-body {{ text-align:center; animation:heroFade 220ms var(--ease-out) both; }}
+.hero-image-wrap {{ max-width:640px; margin:0 auto 18px; animation:heroFade 220ms var(--ease-out) both; }}
+.hero-image {{ width:100%; max-height:260px; object-fit:cover; border-radius:14px; display:block;
+    box-shadow:0 10px 26px rgba(0,0,0,.4); }}
 .hero-badge {{ font-family:'Oswald'; font-size:.72rem; font-weight:700; letter-spacing:2px; color:#fff;
     background:rgba(0,0,0,.35); display:inline-block; padding:4px 12px; border-radius:20px; margin-bottom:14px;
     width:fit-content; }}
@@ -97,7 +100,7 @@ div[class*="st-key-hero_prev"] button, div[class*="st-key-hero_next"] button {{
 }}
 
 /* Puntos indicadores de posicion */
-.hero-dots {{ display:flex; justify-content:center; gap:7px; margin-top:16px; }}
+.hero-dots {{ display:flex; justify-content:center; gap:7px; margin-top:22px; }}
 .hero-dot {{ width:7px; height:7px; border-radius:50%; background:rgba(255,255,255,.22);
     transition:background-color 160ms ease, transform 160ms var(--ease-out); }}
 .hero-dot.active {{ background:{ACCENT}; transform:scale(1.3); }}
@@ -133,9 +136,10 @@ a.hero-widget-card:hover {{ border-color:{ACCENT}; }}
 .hw-stat-value {{ font-family:'Oswald'; font-weight:700; font-size:1.15rem; color:#fff; }}
 .hw-stat-label {{ color:var(--text-secondary); font-size:.65rem; letter-spacing:.4px; text-transform:uppercase; margin-top:2px; }}
 @media (max-width:900px) {{
-  div[class*="st-key-hero_banner"] > div {{ padding:20px 14px 16px; }}
+  div[class*="st-key-hero_banner"] {{ padding:24px 16px 22px; }}
   .hero-headline {{ font-size:1.9rem; }}
   .hero-sub {{ max-width:100%; }}
+  .hero-image {{ max-height:170px; }}
 }}
 
 /* --- Tarjetas de partido (Jornada · horarios en España, grid de 3 columnas) --- */
