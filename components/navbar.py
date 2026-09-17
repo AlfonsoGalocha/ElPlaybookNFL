@@ -62,7 +62,7 @@ def render(logo_b64):
         st.session_state.page = DEFAULT_PAGE
 
     nav_l, nav_c, nav_t, nav_tt, nav_r = st.columns(
-        [1.9, 5.9, 0.85, 0.4, 0.85], vertical_alignment="center")
+        [2.05, 5.75, 0.85, 0.4, 0.85], vertical_alignment="center")
     with nav_l:
         st.markdown(
             f'<div class="nav-brand"><img src="data:image/png;base64,{logo_b64}"/>'

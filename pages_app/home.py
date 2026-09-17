@@ -82,8 +82,13 @@ def render(ctx):
     if games.empty:
         st.info("Todavía no hay partidos programados para esta temporada.")
     else:
-        st.markdown("".join(_game_card(g, ctx.team_meta) for g in games.itertuples()),
-                    unsafe_allow_html=True)
+        game_list = list(games.itertuples())
+        for i in range(0, len(game_list), 3):
+            row = game_list[i:i + 3]
+            cols = st.columns(3)
+            for col, g in zip(cols, row):
+                with col:
+                    st.markdown(_game_card(g, ctx.team_meta), unsafe_allow_html=True)
 
     pbp = load_pbp(ctx.season)
     duel_game = None

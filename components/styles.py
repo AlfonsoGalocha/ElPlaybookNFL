@@ -38,8 +38,8 @@ h1,h2,h3 {{ font-family:'Oswald', sans-serif; letter-spacing:.5px; color:#fff; }
 
 /* --- Navbar --- */
 .navbar {{ display:flex; align-items:center; gap:14px; padding:.3rem 0 .6rem; }}
-.nav-brand {{ font-family:'Oswald'; font-weight:700; font-size:1.05rem; letter-spacing:.3px; color:#fff; display:flex; align-items:center; gap:.35rem; white-space:nowrap; overflow:hidden; }}
-.nav-brand img {{ height:38px; width:38px; min-width:38px; border-radius:50%; object-fit:cover; box-shadow:0 0 0 2px rgba(255,255,255,.18); }}
+.nav-brand {{ font-family:'Oswald'; font-weight:700; font-size:1.05rem; letter-spacing:.3px; color:#fff; display:flex; align-items:center; gap:.4rem; white-space:nowrap; overflow:hidden; }}
+.nav-brand img {{ height:52px; width:52px; min-width:52px; border-radius:50%; object-fit:cover; box-shadow:0 0 0 2px rgba(255,255,255,.18); }}
 .nav-brand .nfl {{ background:linear-gradient(135deg,{ACCENT},{ACCENT2}); color:#fff; padding:.02rem .35rem; border-radius:6px; font-size:.82rem; }}
 :where(div[data-testid="stHorizontalBlock"] div[data-testid="stButton"] button) {{
     border-radius:999px !important; font-family:'Oswald'; font-size:.78rem; letter-spacing:.2px;
@@ -74,10 +74,11 @@ div[data-testid="stPopoverBody"], div[data-baseweb="popover"] div[role="tooltip"
 
 /* --- Hero slider (1 diapositiva centrada + flechas + puntos) --- */
 @keyframes heroFade {{ from {{ opacity:0; transform:translateY(6px); }} to {{ opacity:1; transform:translateY(0); }} }}
-div[class*="st-key-hero_banner"] > div {{
+div[class*="st-key-hero_banner"] {{
     background:linear-gradient(135deg,{ACCENT}26,var(--bg-card) 55%);
-    border:1px solid rgba(255,255,255,.08); border-radius:20px; padding:28px 20px 20px; margin:.2rem 0 1.4rem;
+    border:1px solid rgba(255,255,255,.08); border-radius:20px; padding:28px 20px 14px; margin:.2rem 0 1.4rem;
 }}
+div[class*="st-key-hero_banner"] > div {{ background:transparent; border:none; padding:0; margin:0; }}
 .hero-slide-body {{ text-align:center; animation:heroFade 220ms var(--ease-out) both; }}
 .hero-badge {{ font-family:'Oswald'; font-size:.72rem; font-weight:700; letter-spacing:2px; color:#fff;
     background:rgba(0,0,0,.35); display:inline-block; padding:4px 12px; border-radius:20px; margin-bottom:14px;
@@ -137,27 +138,27 @@ a.hero-widget-card:hover {{ border-color:{ACCENT}; }}
   .hero-sub {{ max-width:100%; }}
 }}
 
-/* --- Tarjetas de partido (Jornada · horarios en España) --- */
+/* --- Tarjetas de partido (Jornada · horarios en España, grid de 3 columnas) --- */
 .game-card {{ display:flex; align-items:center; background:var(--bg-card-alt); border:1px solid var(--border-subtle);
-    border-radius:12px; padding:14px 18px; margin-bottom:12px; transition:border-color .18s ease; }}
+    border-radius:12px; padding:12px 10px; margin-bottom:12px; height:100%; transition:border-color .18s ease; }}
 .game-card:hover {{ border-color:{ACCENT}; }}
-.game-team {{ flex:0 0 40%; max-width:40%; display:flex; align-items:center; gap:12px; min-width:0; }}
+.game-team {{ flex:0 0 38%; max-width:38%; display:flex; align-items:center; gap:8px; min-width:0; }}
 .game-team.gt-home {{ justify-content:flex-end; text-align:right; }}
 .game-team.gt-away {{ justify-content:flex-start; text-align:left; }}
-.game-team img {{ width:44px; height:44px; object-fit:contain; flex:0 0 auto; }}
-.game-team .gt-name {{ font-family:'Oswald'; font-weight:700; font-size:1rem; color:var(--text-primary);
+.game-team img {{ width:34px; height:34px; object-fit:contain; flex:0 0 auto; }}
+.game-team .gt-name {{ font-family:'Oswald'; font-weight:700; font-size:.82rem; color:var(--text-primary);
     line-height:1.15; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }}
-.game-center {{ flex:0 0 20%; max-width:20%; display:flex; flex-direction:column; align-items:center; gap:4px; }}
+.game-center {{ flex:0 0 24%; max-width:24%; display:flex; flex-direction:column; align-items:center; gap:4px; }}
 .game-pill {{ background:rgba(255,255,255,.06); border:1px solid var(--border-subtle); border-radius:20px;
-    padding:5px 14px; text-align:center; }}
-.game-vs {{ font-family:'Bebas Neue'; font-size:1.15rem; color:var(--text-primary); letter-spacing:1px; }}
-.game-score {{ font-family:'Bebas Neue'; font-size:1.35rem; color:var(--text-primary); letter-spacing:1px; }}
-.game-time {{ color:var(--text-amber); font-size:.72rem; font-weight:600; margin-top:5px; text-align:center; white-space:nowrap; }}
-.game-final {{ color:var(--text-secondary); font-size:.68rem; font-weight:700; letter-spacing:1px; margin-top:2px; }}
-@media (max-width:720px) {{
+    padding:5px 8px; text-align:center; width:100%; }}
+.game-vs {{ font-family:'Bebas Neue'; font-size:1.05rem; color:var(--text-primary); letter-spacing:1px; }}
+.game-score {{ font-family:'Bebas Neue'; font-size:1.2rem; color:var(--text-primary); letter-spacing:1px; }}
+.game-time {{ color:var(--text-amber); font-size:.64rem; font-weight:600; margin-top:5px; text-align:center; line-height:1.25; }}
+.game-final {{ color:var(--text-secondary); font-size:.64rem; font-weight:700; letter-spacing:1px; margin-top:2px; }}
+@media (max-width:900px) {{
   .game-card {{ flex-wrap:wrap; }}
   .game-team {{ flex:0 0 42%; max-width:42%; }}
-  .game-team .gt-name {{ font-size:.82rem; white-space:normal; }}
+  .game-team .gt-name {{ font-size:.8rem; white-space:normal; }}
   .game-center {{ flex:0 0 100%; max-width:100%; order:3; margin-top:10px; }}
 }}
 
