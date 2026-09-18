@@ -35,7 +35,9 @@ def _game_card(g, team_meta):
             f"{madrid.strftime('%d/%m')} · {madrid.strftime('%H:%M')}h") if madrid else g.gameday
 
     if played:
-        center = (f'<div class="game-score">{int(g.away_score)} - {int(g.home_score)}</div>'
+        # El equipo local va a la izquierda (gt-home) y el visitante a la derecha
+        # (gt-away) — el marcador debe seguir ese mismo orden para no verse al reves.
+        center = (f'<div class="game-score">{int(g.home_score)} - {int(g.away_score)}</div>'
                   f'<div class="game-final">FINAL</div>')
     else:
         center = f'<div class="game-vs">VS</div><div class="game-time">{when}</div>'
