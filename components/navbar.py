@@ -1,4 +1,4 @@
-"""components/navbar.py — cabecera con marca, navegacion principal (5 pestañas fijas), menu
+"""components/navbar.py — cabecera con marca, navegacion principal (pestañas fijas), menu
 de herramientas (st.popover), enlace a TikTok y selector de temporada, todo en una sola fila."""
 
 import streamlit as st
@@ -8,6 +8,7 @@ TIKTOK_URL = "https://www.tiktok.com/@elplaybook_nfl"
 PAGES_PRIMARY = [
     ("home", "🏠 Inicio"),
     ("clasificacion", "📊 Clasificación"),
+    ("prediccion", "🔮 Predicción"),
     ("rankings", "🏆 Rankings"),
     ("matchups", "⚔️ Matchups"),
     ("laboratorio", "🧪 Laboratorio"),
@@ -56,7 +57,7 @@ def _tools_menu():
 
 
 def render(logo_b64):
-    """Dibuja la navbar (marca + 5 pestañas principales + herramientas + TikTok + temporada)
+    """Dibuja la navbar (marca + pestañas principales + herramientas + TikTok + temporada)
     en una sola fila y devuelve la temporada elegida."""
     if "page" not in st.session_state:
         st.session_state.page = DEFAULT_PAGE
