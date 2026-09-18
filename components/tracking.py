@@ -37,6 +37,16 @@ Dos problemas de Streamlit que este modulo resuelve:
    real. Los eventos de "accion" (p.ej. share_result) no llevan esta
    deduplicacion — ver _gtag_event_now.
 
+TRAMPA A EVITAR: no llames a ninguna funcion de aqui justo antes de un st.rerun()
+en el mismo manejador de un boton. El iframe que crea components.html() necesita
+un instante para cargar y ejecutar su script en el navegador; si el rerun llega
+antes de que eso pase, el rerun sustituye el DOM y el evento se pierde sin avisar
+(no lanza ningun error). Esto le paso a track_prediction_made() en
+pages_app/prediccion.py la primera vez: el fix fue guardar el evento pendiente en
+st.session_state y dispararlo al principio del SIGUIENTE render (uno que no
+termina en rerun) — usa ese mismo patron si necesitas trackear algo dentro de un
+manejador que tambien hace st.rerun().
+
 Nada de esto llega a JavaScript si GOOGLE_ANALYTICS_ID no esta configurado: todas las
 funciones de aqui son no-op (no crean ningun iframe, no pueden lanzar un error)
 mientras env.ANALYTICS_ENABLED sea False. Ver env.py y components/head_tags.py.
@@ -142,6 +152,18 @@ def track_trend_viewed():
 
 def track_football_iq_viewed():
     _gtag_event("football_iq_viewed", "football_iq_viewed")
+
+
+def track_prediction_viewed():
+    _gtag_event("prediction_viewed", "prediction_viewed")
+
+
+def track_prediction_made(week, team):
+    """Se llama cada vez que se elige (o se cambia) el ganador de un partido. No se
+    deduplica por valor: elegir el mismo equipo que ya tenias marcado no dispara un
+    evento nuevo (el boton ya esta activo y no hace nada), pero cambiar de un equipo a
+    otro en el mismo partido, o predecir otro partido, son acciones reales distintas."""
+    _gtag_event_now("prediction_made", {"week": int(week), "team": str(team)})
 
 
 def track_share_result(content_type):

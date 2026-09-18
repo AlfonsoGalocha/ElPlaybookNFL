@@ -38,6 +38,8 @@ ALLOWED_PARAMS = {
     "laboratory_viewed": set(),
     "trend_viewed": set(),
     "football_iq_viewed": set(),
+    "prediction_viewed": set(),
+    "prediction_made": {"week", "team"},
     "share_result": {"content_type"},
 }
 
@@ -150,10 +152,12 @@ def test_no_pii_in_events(monkeypatch):
         lambda: tracking.track_laboratory_viewed(),
         lambda: tracking.track_trend_viewed(),
         lambda: tracking.track_football_iq_viewed(),
+        lambda: tracking.track_prediction_viewed(),
+        lambda: tracking.track_prediction_made(1, "KC"),
         lambda: tracking.track_quiz_completed("rookie", 3, 5, 1),
         lambda: tracking.track_share_result("quiz"),
     ])
-    assert len(events) == 9
+    assert len(events) == 11
     for name, params in events:
         assert name in ALLOWED_PARAMS, f"evento no documentado en ALLOWED_PARAMS: {name}"
         allowed = ALLOWED_PARAMS[name]

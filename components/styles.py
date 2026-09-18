@@ -200,6 +200,22 @@ div[class*="st-key-hero_click_"]:hover .hero-top3-team {{ border-color:{ACCENT};
   .game-center {{ flex:0 0 100%; max-width:100%; order:3; margin-top:10px; }}
 }}
 
+/* --- Tarjeta de prediccion (elegir ganador de un partido, pages_app/prediccion.py) --- */
+.pred-card {{ background:var(--bg-card-alt); border:1px solid var(--border-subtle); border-radius:14px;
+    padding:14px 14px 8px; margin-bottom:8px; transition:border-color .18s ease; }}
+.pred-card.pred-made {{ border-color:{ACCENT}; }}
+.pred-time {{ text-align:center; color:var(--text-amber); font-size:.64rem; font-weight:600; margin-bottom:10px; }}
+.pred-matchup {{ display:flex; align-items:center; justify-content:center; gap:14px; }}
+.pred-team-info {{ display:flex; flex-direction:column; align-items:center; gap:6px; flex:1; min-width:0; }}
+.pred-team-info img {{ width:40px; height:40px; object-fit:contain; }}
+.pred-team-info .pt-name {{ font-family:'Oswald'; font-weight:700; font-size:.78rem; color:var(--text-primary);
+    text-align:center; line-height:1.2; }}
+.pred-vs {{ font-family:'Bebas Neue'; font-size:1rem; color:var(--text-secondary); flex:0 0 auto; }}
+@media (max-width:900px) {{
+  .pred-team-info img {{ width:32px; height:32px; }}
+  .pred-team-info .pt-name {{ font-size:.7rem; }}
+}}
+
 /* --- Titulos de seccion --- */
 .sect-title {{ font-family:'Bebas Neue'; font-size:2.1rem; letter-spacing:1px; color:#fff; margin:.1rem 0 .2rem;
     position:relative; display:inline-block; }}
